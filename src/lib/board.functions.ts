@@ -133,6 +133,56 @@ function matchesCategory(row: { categories: { slug: string } | null }, category?
  * admin approve/reject path. Never triggered by a public GET.
  */
 
+export type BoardStats = {
+  listingCount: number;
+  allocatedCents: number;
+  clicks: number;
+  launchedAt: string | null;
+};
+
+/** All-time board totals. Real persisted ranks and views only — never padded. */
+export const getBoardStats = createServerFn({ method: "GET" }).handler(
+  async (): Promise<BoardStats> => {
+    const empty: BoardStats = {
+      listingCount: 0,
+      allocatedCents: 0,
+      clicks: 0,
+      launchedAt: null,
+    };
+    try {
+      const supabase = createPublicSupabase();
+      const { data, error } = await supabase
+        .from("listings")
+        .select("allocation_cents, approved_at, rankings(rank, unique_views)")
+        .eq("status", "approved")
+        .limit(400);
+      if (error) throw new Error(error.message);
+
+      let listingCount = 0;
+      let allocatedCents = 0;
+      let clicks = 0;
+      let launchedAt: string | null = null;
+
+      for (const row of data ?? []) {
+        const allocationCents = row.allocation_cents ?? 0;
+        const rankEmbed = Array.isArray(row.rankings) ? row.rankings[0] : row.rankings;
+        if (!isBoardVisible(allocationCents) || rankEmbed?.rank == null) continue;
+        listingCount += 1;
+        allocatedCents += allocationCents;
+        clicks += rankEmbed.unique_views ?? 0;
+        if (row.approved_at && (!launchedAt || row.approved_at < launchedAt)) {
+          launchedAt = row.approved_at;
+        }
+      }
+
+      return { listingCount, allocatedCents, clicks, launchedAt };
+    } catch (error) {
+      console.error("[board-stats] read failed", error);
+      return empty;
+    }
+  },
+);
+
 export const getCategories = createServerFn({ method: "GET" }).handler(async () => {
   try {
     const supabase = createPublicSupabase();
@@ -243,6 +293,75 @@ async function loadDailyArchive(date: string, category?: string): Promise<BoardL
 
   return withCosts(listings);
 }
+
+export type CategoryOverview = {
+  id: string;
+  slug: string;
+  name: string;
+  listingCount: number;
+  lastAllocatedAt: string | null;
+  listings: BoardListing[];
+};
+
+export type CategoriesOverview = {
+  hottest: CategoryOverview[];
+  categories: CategoryOverview[];
+};
+
+/** Active categories with their all-time top 3. Empty categories still appear. */
+export const getCategoriesOverview = createServerFn({ method: "GET" }).handler(
+  async (): Promise<CategoriesOverview> => {
+    const [catalog, listings] = await Promise.all([
+      (async () => {
+        const supabase = createPublicSupabase();
+        const { data, error } = await supabase
+          .from("categories")
+          .select("id, slug, name")
+          .eq("status", "active")
+          .order("sort_order");
+        if (error) throw new Error(error.message);
+        return data ?? [];
+      })(),
+      loadLiveBoard("all_time"),
+    ]);
+
+    const grouped = new Map<string, BoardListing[]>();
+    for (const listing of listings) {
+      if (!listing.categorySlug) continue;
+      const bucket = grouped.get(listing.categorySlug) ?? [];
+      bucket.push(listing);
+      grouped.set(listing.categorySlug, bucket);
+    }
+
+    const categories: CategoryOverview[] = catalog.map((category) => {
+      const rows = grouped.get(category.slug) ?? [];
+      const lastAllocatedAt = rows.reduce<string | null>((latest, row) => {
+        if (!row.approvedAt) return latest;
+        if (!latest || row.approvedAt > latest) return row.approvedAt;
+        return latest;
+      }, null);
+      return {
+        id: category.id,
+        slug: category.slug,
+        name: category.name,
+        listingCount: rows.length,
+        lastAllocatedAt,
+        listings: rows.slice(0, 3).map((row, index) => ({ ...row, rank: index + 1 })),
+      };
+    });
+
+    const hottest = categories
+      .filter((category) => category.listingCount > 0)
+      .slice()
+      .sort((a, b) => {
+        if (b.listingCount !== a.listingCount) return b.listingCount - a.listingCount;
+        return (b.lastAllocatedAt ?? "").localeCompare(a.lastAllocatedAt ?? "");
+      })
+      .slice(0, 3);
+
+    return { hottest, categories };
+  },
+);
 
 export const getBoard = createServerFn({ method: "GET" })
   .inputValidator((data: unknown) => boardInput.parse(data ?? {}))

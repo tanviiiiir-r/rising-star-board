@@ -1,6 +1,6 @@
-import { Link, useNavigate } from "@tanstack/react-router";
+import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
-import { MoreVertical, Plus, Scale } from "lucide-react";
+import { FolderOpen, Info, MoreVertical, Plus, Scale } from "lucide-react";
 
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Button } from "@/components/ui/button";
@@ -17,6 +17,16 @@ export function SiteHeader() {
   const { user, loading } = useSession();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { onCategories, onAbout, onRules } = useRouterState({
+    select: (state) => {
+      const path = state.location.pathname;
+      return {
+        onCategories: path === "/categories",
+        onAbout: path === "/about",
+        onRules: path === "/how-ranking-works",
+      };
+    },
+  });
 
   async function handleSignOut() {
     await queryClient.cancelQueries();
@@ -35,20 +45,53 @@ export function SiteHeader() {
         </Link>
 
         <nav className="flex items-center gap-1">
-          <Button asChild size="sm" variant="ghost" className="hidden sm:inline-flex">
-            <Link to="/how-ranking-works">How ranking works</Link>
+          <Button
+            asChild
+            size="sm"
+            variant={onCategories ? "outline" : "ghost"}
+            className="hidden sm:inline-flex"
+          >
+            <Link to="/categories">Categories</Link>
+          </Button>
+          <Button
+            asChild
+            size="sm"
+            variant={onAbout ? "outline" : "ghost"}
+            className="hidden sm:inline-flex"
+          >
+            <Link to="/about">About</Link>
+          </Button>
+          <Button
+            asChild
+            size="sm"
+            variant={onRules ? "outline" : "ghost"}
+            className="hidden sm:inline-flex"
+          >
+            <Link to="/how-ranking-works">Rules</Link>
           </Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild className="sm:hidden">
-              <Button size="icon" variant="ghost" aria-label="More, including how ranking works">
+              <Button size="icon" variant="ghost" aria-label="More, including categories and about">
                 <MoreVertical className="size-4" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItem asChild>
+                <Link to="/categories">
+                  <FolderOpen className="size-4" />
+                  Categories
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link to="/about">
+                  <Info className="size-4" />
+                  About
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
                 <Link to="/how-ranking-works">
                   <Scale className="size-4" />
-                  How ranking works
+                  Rules
                 </Link>
               </DropdownMenuItem>
               {user ? (
