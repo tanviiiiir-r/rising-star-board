@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Ban, CalendarDays, Coins, Eye } from "lucide-react";
 
+import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
 import { formatCents } from "@/lib/format";
 import { RANKING, MOVEMENT } from "@/lib/ranking";
@@ -145,6 +146,7 @@ function HowRankingWorksPage() {
         <Link to="/" className="mt-8 inline-block text-sm text-foreground underline-offset-2 hover:underline">
           ← Back to the board
         </Link>
+        <SiteFooter />
       </main>
     </div>
   );

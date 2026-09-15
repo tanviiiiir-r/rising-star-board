@@ -8,6 +8,7 @@ import { ClaimRankControl } from "@/components/board/ClaimRankControl";
 import { ListingCard } from "@/components/board/ListingCard";
 import { RanksFreshness } from "@/components/board/RanksFreshness";
 import { RisingStrip } from "@/components/board/RisingStrip";
+import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
 import { Button } from "@/components/ui/button";
 import {
@@ -242,6 +243,7 @@ function BoardPage() {
             </Link>
             .
           </p>
+          <SiteFooter />
         </div>
       </main>
     </div>
