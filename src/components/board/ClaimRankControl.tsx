@@ -1,68 +1,96 @@
 import { useEffect, useState } from "react";
-import { Link } from "@tanstack/react-router";
-import { Coins, Wallet } from "lucide-react";
+import { useNavigate } from "@tanstack/react-router";
+import { Globe } from "lucide-react";
 
 import { AmountStepper, snapAllocationCents } from "@/components/board/AmountStepper";
 import { Button } from "@/components/ui/button";
-import { formatCents } from "@/lib/format";
-import { RANKING, costToClaimFirstCents, previewRankForAmount } from "@/lib/ranking";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { costToClaimFirstCents, previewRankForAmount } from "@/lib/ranking";
 
 export function ClaimRankControl({
   listings,
+  categories,
   archived = false,
 }: {
   listings: Array<{ allocationCents: number }>;
+  categories: Array<{ id: string; name: string }>;
   archived?: boolean;
 }) {
+  const navigate = useNavigate();
   const defaultCents = costToClaimFirstCents(listings[0]?.allocationCents ?? null, false);
   const [draftCents, setDraftCents] = useState(defaultCents);
+  const [url, setUrl] = useState("");
+  const [categoryId, setCategoryId] = useState("");
+
   useEffect(() => {
     setDraftCents(defaultCents);
   }, [defaultCents]);
+
   const previewCents = snapAllocationCents(draftCents);
-  const previewRank = previewRankForAmount(listings, previewCents);
-  const buySearch = { cents: previewCents } as const;
+  const previewRank = previewRankForAmount(listings, previewCents) ?? 1;
 
   return (
-    <div className="surface-card p-6 sm:p-8">
-      <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-        <div className="min-w-0">
-          <span className="text-xs font-medium tracking-[0.08em] text-muted-foreground uppercase">
-            {previewRank == null ? "Below the board" : `Claim #${previewRank}`}
-          </span>
-          <div className="mt-4">
-            <AmountStepper
-              valueCents={draftCents}
-              onChange={setDraftCents}
-              disabled={archived}
-            />
-          </div>
-          <p className="mt-3 max-w-md text-sm text-muted-foreground">
-            {archived
-              ? "This Daily board is archived. Switch to today to claim a rank."
-              : previewRank == null
-                ? `Allocate at least ${formatCents(RANKING.minVisibleCents)} to appear.`
-                : `Type a dollar amount or use +/−. Paying less than #1 still lands at #${previewRank}.`}
-          </p>
-        </div>
+    <div className="mx-auto max-w-3xl text-center">
+      <h1 className="flex flex-wrap items-center justify-center gap-x-2 gap-y-3 text-[2rem] font-medium leading-none tracking-[-0.022em] sm:text-5xl">
+        <span>Claim #{previewRank} for</span>
+        <AmountStepper
+          valueCents={draftCents}
+          onChange={setDraftCents}
+          disabled={archived}
+        />
+      </h1>
 
-        <div className="flex w-full shrink-0 flex-col gap-2 sm:max-w-xs">
-          <Button size="lg" className="w-full" disabled={archived} asChild>
-            <Link to="/credits/buy" search={{ ...buySearch, method: "credits" }}>
-              <Wallet className="size-4" />
-              {previewRank == null
-                ? `Buy credits · ${formatCents(previewCents)}`
-                : `Buy credits · Claim #${previewRank}`}
-            </Link>
-          </Button>
-          <Button size="lg" variant="outline" className="w-full" disabled={archived} asChild>
-            <Link to="/credits/buy" search={{ ...buySearch, method: "points" }}>
-              <Coins className="size-4" />
-              Buy with points
-            </Link>
-          </Button>
-        </div>
-      </div>
+      <form
+        className="mt-8 flex flex-col gap-2 sm:flex-row sm:items-center"
+        onSubmit={(event) => {
+          event.preventDefault();
+          if (archived || !url.trim() || !categoryId) return;
+          void navigate({
+            to: "/submit",
+            search: {
+              url: url.trim(),
+              categoryId,
+              cents: previewCents,
+            },
+          });
+        }}
+      >
+        <label className="relative min-w-0 flex-1">
+          <Globe className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            type="url"
+            name="url"
+            required
+            placeholder="Your product URL"
+            value={url}
+            disabled={archived}
+            onChange={(event) => setUrl(event.target.value)}
+            className="h-11 rounded-full pl-9"
+          />
+        </label>
+        <Select value={categoryId || undefined} onValueChange={setCategoryId} disabled={archived}>
+          <SelectTrigger className="h-11 w-full rounded-full sm:w-[220px]">
+            <SelectValue placeholder="Choose a category" />
+          </SelectTrigger>
+          <SelectContent>
+            {categories.map((category) => (
+              <SelectItem key={category.id} value={category.id}>
+                {category.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Button type="submit" className="h-11 rounded-full px-6" disabled={archived || !categoryId}>
+          Claim rank
+        </Button>
+      </form>
     </div>
   );
 }

@@ -4,6 +4,7 @@ import { Ban, CalendarDays, Coins, Eye } from "lucide-react";
 import { SiteHeader } from "@/components/SiteHeader";
 import { formatCents } from "@/lib/format";
 import { RANKING, MOVEMENT } from "@/lib/ranking";
+import { defaultShareMeta } from "@/lib/share-meta";
 import { publicSiteUrl } from "@/lib/site-url";
 
 function rankingPageUrl() {
@@ -20,13 +21,12 @@ export const Route = createFileRoute("/how-ranking-works")({
         name: "description",
         content: `Bid Ladder ranking ${RANKING.version} in full: credits allocated to a listing determine its rank. Views and shares are watch-only analytics.`,
       },
-      { property: "og:title", content: "How ranking works — Bid Ladder" },
-      {
-        property: "og:description",
-        content: `${HEADLINE} Minimum ${formatCents(RANKING.minVisibleCents)} to appear, ${formatCents(RANKING.incrementCents)} steps.`,
-      },
-      { property: "og:type", content: "article" },
-      { property: "og:url", content: rankingPageUrl() },
+      ...defaultShareMeta({
+        title: "How ranking works — Bid Ladder",
+        description: `${HEADLINE} Minimum ${formatCents(RANKING.minVisibleCents)} to appear, ${formatCents(RANKING.incrementCents)} steps.`,
+        path: "/how-ranking-works",
+        type: "article",
+      }),
     ],
     links: [{ rel: "canonical", href: rankingPageUrl() }],
   }),

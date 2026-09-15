@@ -31,31 +31,25 @@ export function TodayRanking({ listings }: { listings: BoardListing[] }) {
         </Link>
       </div>
 
-      {rows.length === 0 ? (
-        <p className="mt-3 text-xs text-muted-foreground">
-          Nobody has allocated on today's board yet.
-        </p>
-      ) : (
-        <ul className="mt-3 flex flex-col">
-          {rows.map((listing) => (
-            <li key={listing.id}>
-              <Link
-                to="/l/$slug"
-                params={{ slug: listing.slug }}
-                className="flex items-center gap-3 rounded-lg px-1.5 py-2 transition-colors hover:bg-surface"
-              >
-                <span className="rank-number w-7 shrink-0 text-xs text-muted-foreground">
-                  #{listing.rank ?? "—"}
-                </span>
-                <span className="min-w-0 flex-1 truncate text-sm">{listing.name}</span>
-                <span className="allocation-price shrink-0 text-sm">
-                  {formatCents(listing.allocationCents)}
-                </span>
-              </Link>
-            </li>
-          ))}
-        </ul>
-      )}
+      <ul className="mt-3 flex flex-col">
+        {rows.map((listing) => (
+          <li key={listing.id}>
+            <Link
+              to="/l/$slug"
+              params={{ slug: listing.slug }}
+              className="flex items-center gap-3 rounded-lg px-1.5 py-2 transition-colors hover:bg-surface"
+            >
+              <span className="rank-number w-7 shrink-0 text-xs text-muted-foreground">
+                #{listing.rank ?? "—"}
+              </span>
+              <span className="min-w-0 flex-1 truncate text-sm">{listing.name}</span>
+              <span className="allocation-price shrink-0 text-sm">
+                {formatCents(listing.allocationCents)}
+              </span>
+            </Link>
+          </li>
+        ))}
+      </ul>
     </aside>
   );
 }

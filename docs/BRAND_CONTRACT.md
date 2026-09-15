@@ -50,7 +50,7 @@ Light and dark both use the gold allocation color. Dark stays a trading-floor ch
 
 ## Wordmark
 
-[`src/components/SiteHeader.tsx`](../src/components/SiteHeader.tsx): “Bid Ladder” + gold mark. Do not substitute an Outbid-like script logo.
+[`src/components/SiteHeader.tsx`](../src/components/SiteHeader.tsx): charcoal square + three acid-lime rungs (`LogoMark`) beside “Bid Ladder”. Do not substitute an Outbid-like script logo. Source: `public/logo-mark.svg`.
 
 ## Owners
 

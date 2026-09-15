@@ -56,8 +56,7 @@ export async function createCreditCheckoutSession(input: {
   const stripe = getStripe();
   const session = await stripe.checkout.sessions.create({
     mode: "payment",
-    ui_mode: "hosted",
-    payment_method_types: ["card"],
+    ui_mode: "hosted_page",
     success_url: `${input.origin}/dashboard?topup=1`,
     cancel_url: `${input.origin}/credits/buy?cents=${cents}&method=${input.method}&canceled=1`,
     line_items: [
@@ -78,7 +77,8 @@ export async function createCreditCheckoutSession(input: {
       cents: String(cents),
       kind: "credit_topup",
     },
-  });
+    integration_identifier: "bidladder-credits-kxmqpwrn",
+  } as Stripe.Checkout.SessionCreateParams);
   if (!session.url) throw new Error("Stripe did not return a checkout URL.");
   return { url: session.url, sessionId: session.id };
 }

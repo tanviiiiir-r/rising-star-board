@@ -16,11 +16,13 @@ export function AmountStepper({
   onChange,
   disabled = false,
   size = "lg",
+  minCents = RANKING.minVisibleCents,
 }: {
   valueCents: number;
   onChange: (cents: number) => void;
   disabled?: boolean;
-  size?: "lg" | "md";
+  size?: "lg" | "md" | "row";
+  minCents?: number;
 }) {
   const [dollarInput, setDollarInput] = useState(centsToDollarInput(valueCents));
 
@@ -29,7 +31,10 @@ export function AmountStepper({
   }, [valueCents]);
 
   function applyCents(next: number) {
-    const snapped = snapAllocationCents(next);
+    const snapped = Math.max(
+      minCents,
+      Math.round(next / RANKING.incrementCents) * RANKING.incrementCents,
+    );
     onChange(snapped);
     setDollarInput(centsToDollarInput(snapped));
   }
@@ -43,16 +48,17 @@ export function AmountStepper({
     applyCents(Math.round(parsed * 100));
   }
 
+  const row = size === "row";
   const large = size === "lg";
 
   return (
-    <div className="flex flex-wrap items-center gap-2">
+    <div className={cn("flex items-center", row || large ? "gap-1" : "flex-wrap gap-2")}>
       <Button
         type="button"
-        variant="outline"
+        variant="ghost"
         size="icon"
         aria-label={`Decrease by ${formatCents(RANKING.incrementCents)}`}
-        disabled={disabled || valueCents <= RANKING.minVisibleCents}
+        disabled={disabled || valueCents <= minCents}
         onClick={() => applyCents(valueCents - RANKING.incrementCents)}
       >
         <Minus className="size-4" />
@@ -61,7 +67,7 @@ export function AmountStepper({
         <span
           className={cn(
             "allocation-price leading-none",
-            large ? "text-3xl sm:text-4xl" : "text-2xl",
+            large ? "text-3xl sm:text-4xl" : row ? "text-2xl" : "text-2xl",
           )}
         >
           $
@@ -69,7 +75,7 @@ export function AmountStepper({
         <input
           className={cn(
             "allocation-price min-w-[3ch] bg-transparent leading-none caret-primary outline-none",
-            large ? "text-5xl sm:text-6xl" : "text-3xl",
+            large ? "text-5xl sm:text-6xl" : row ? "text-3xl sm:text-4xl" : "text-3xl",
           )}
           style={{ width: `${Math.max(2, dollarInput.length + 1)}ch` }}
           inputMode="numeric"
@@ -93,7 +99,7 @@ export function AmountStepper({
       </label>
       <Button
         type="button"
-        variant="outline"
+        variant="ghost"
         size="icon"
         aria-label={`Increase by ${formatCents(RANKING.incrementCents)}`}
         disabled={disabled}

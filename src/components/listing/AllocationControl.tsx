@@ -1,8 +1,9 @@
 import { useState } from "react";
+import { Link } from "@tanstack/react-router";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Minus, Plus } from "lucide-react";
 import { toast } from "sonner";
 
+import { AmountStepper, snapAllocationCents } from "@/components/board/AmountStepper";
 import { Button } from "@/components/ui/button";
 import { setListingAllocation } from "@/lib/allocation.functions";
 import { formatCents } from "@/lib/format";
@@ -31,42 +32,17 @@ export function AllocationControl({
 
   const delta = draftCents - allocationCents;
   const check = assertAllocationAmount(draftCents);
-  const overBudget = delta > availableCents;
+  const shortfallCents = Math.max(0, delta - availableCents);
+  const overBudget = shortfallCents > 0;
   const canSave = check.ok && delta !== 0 && !overBudget && !mutation.isPending;
+  const buyCents = snapAllocationCents(Math.max(RANKING.minVisibleCents, shortfallCents));
 
   return (
-    <div className="mt-3 rounded-lg border border-border bg-surface/60 p-3">
-      <p className="text-xs uppercase tracking-wide text-muted-foreground">Allocation</p>
-      <div className="mt-2 flex flex-wrap items-center gap-2">
-        <Button
-          type="button"
-        variant="outline"
-        size="icon"
-        aria-label={`Decrease by ${formatCents(RANKING.incrementCents)}`}
-          disabled={draftCents <= RANKING.minVisibleCents}
-          onClick={() => setDraftCents((cents) => Math.max(0, cents - RANKING.incrementCents))}
-        >
-          <Minus className="size-4" />
-        </Button>
-        <span className="allocation-price min-w-24 text-center text-lg">
-          {formatCents(draftCents)}
-        </span>
-        <Button
-          type="button"
-        variant="outline"
-        size="icon"
-        aria-label={`Increase by ${formatCents(RANKING.incrementCents)}`}
-          onClick={() => setDraftCents((cents) => cents + RANKING.incrementCents)}
-        >
-          <Plus className="size-4" />
-        </Button>
-        <Button
-          type="button"
-          size="sm"
-          disabled={!canSave}
-          onClick={() => mutation.mutate(draftCents)}
-        >
-          {mutation.isPending ? "Saving…" : "Set allocation"}
+    <div className="flex shrink-0 flex-col items-end gap-1">
+      <div className="flex items-center gap-1">
+        <AmountStepper size="row" valueCents={draftCents} onChange={setDraftCents} />
+        <Button type="button" size="sm" disabled={!canSave} onClick={() => mutation.mutate(draftCents)}>
+          {mutation.isPending ? "Saving" : "Set"}
         </Button>
         {allocationCents > 0 ? (
           <Button
@@ -76,20 +52,21 @@ export function AllocationControl({
             disabled={mutation.isPending}
             onClick={() => mutation.mutate(0)}
           >
-            Release all
+            Release
           </Button>
         ) : null}
       </div>
-      <p className="mt-2 text-[11px] text-muted-foreground">
-        Steps of {formatCents(RANKING.incrementCents)} · minimum{" "}
-        {formatCents(RANKING.minVisibleCents)} to appear on a board.
-        {delta > 0 ? ` This commits ${formatCents(delta)} more from your wallet.` : ""}
-        {delta < 0 ? ` This releases ${formatCents(-delta)} back to your wallet.` : ""}
-      </p>
-      {!check.ok ? <p className="mt-1 text-[11px] text-fall">{check.reason}</p> : null}
+      {!check.ok ? <p className="text-[11px] text-fall">{check.reason}</p> : null}
       {overBudget ? (
-        <p className="mt-1 text-[11px] text-fall">
-          Not enough available credits — you have {formatCents(availableCents)}.
+        <p className="text-[11px] text-fall">
+          {formatCents(shortfallCents)} short ·{" "}
+          <Link
+            to="/credits/buy"
+            search={{ cents: buyCents, method: "credits" }}
+            className="underline-offset-2 hover:underline"
+          >
+            Buy
+          </Link>
         </p>
       ) : null}
     </div>

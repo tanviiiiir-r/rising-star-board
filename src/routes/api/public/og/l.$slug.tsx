@@ -124,16 +124,39 @@ export const Route = createFileRoute("/api/public/og/l/$slug")({
               width: "1200px",
               height: "630px",
               padding: "64px",
-              backgroundColor: "#0b1120",
+              backgroundColor: "#08090A",
               color: "#f8fafc",
             }}
           >
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-              <div style={{ display: "flex", fontSize: 30, color: "#fbbf24", letterSpacing: 2 }}>
-                BID LADDER
+              <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+                <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                  <div
+                    style={{
+                      display: "flex",
+                      width: 36,
+                      height: 8,
+                      backgroundColor: "#B1FD07",
+                      marginLeft: 24,
+                    }}
+                  />
+                  <div
+                    style={{
+                      display: "flex",
+                      width: 36,
+                      height: 8,
+                      backgroundColor: "#B1FD07",
+                      marginLeft: 12,
+                    }}
+                  />
+                  <div style={{ display: "flex", width: 36, height: 8, backgroundColor: "#B1FD07" }} />
+                </div>
+                <div style={{ display: "flex", fontSize: 30, color: "#E4F222", letterSpacing: 2 }}>
+                  BID LADDER
+                </div>
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: "20px" }}>
-                <div style={{ display: "flex", fontSize: 64, fontWeight: 700, color: "#fbbf24" }}>
+                <div style={{ display: "flex", fontSize: 64, fontWeight: 700, color: "#E4F222" }}>
                   {rank == null ? "Rank pending" : `#${rank}`}
                 </div>
                 {movementLabel ? (

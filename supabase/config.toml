@@ -1,1 +1,19 @@
-project_id = "shmunzfyzkqfbjsvxqzo"
+project_id = "aiewpsezsihhukmkiosp"
+
+[auth]
+enabled = true
+site_url = "https://www.bid-ladder.lol"
+additional_redirect_urls = [
+  "https://www.bid-ladder.lol",
+  "https://www.bid-ladder.lol/**",
+  "https://www.bid-ladder.lol/auth",
+  "https://bid-ladder.lol",
+  "https://bid-ladder.lol/**",
+  "http://localhost:5173",
+  "http://localhost:5173/**",
+]
+
+[auth.external.google]
+enabled = true
+client_id = "env(GOOGLE_CLIENT_ID)"
+secret = "env(GOOGLE_CLIENT_SECRET)"

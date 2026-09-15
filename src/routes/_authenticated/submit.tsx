@@ -18,7 +18,18 @@ import {
 import { getCategories } from "@/lib/board.functions";
 import { submitListing } from "@/lib/listings.functions";
 
+type SubmitSearch = { url?: string; categoryId?: string; cents?: number };
+
 export const Route = createFileRoute("/_authenticated/submit")({
+  validateSearch: (search: Record<string, unknown>): SubmitSearch => {
+    const out: SubmitSearch = {};
+    if (typeof search.url === "string") out.url = search.url;
+    if (typeof search.categoryId === "string") out.categoryId = search.categoryId;
+    const centsRaw = search.cents;
+    const cents = typeof centsRaw === "number" ? centsRaw : Number(centsRaw);
+    if (Number.isInteger(cents) && cents > 0) out.cents = cents;
+    return out;
+  },
   head: () => ({
     meta: [
       { title: "Submit a listing — Bid Ladder" },
@@ -36,6 +47,7 @@ export const Route = createFileRoute("/_authenticated/submit")({
 function SubmitPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { url = "", categoryId = "" } = Route.useSearch();
   const { data: categories = [] } = useQuery({
     queryKey: ["categories"],
     queryFn: () => getCategories(),
@@ -44,9 +56,9 @@ function SubmitPage() {
   const [form, setForm] = useState({
     name: "",
     tagline: "",
-    url: "",
+    url,
     description: "",
-    categoryId: "",
+    categoryId,
   });
 
   const mutation = useMutation({

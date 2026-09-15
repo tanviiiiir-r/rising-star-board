@@ -6,6 +6,14 @@ import tsConfigPaths from "vite-tsconfig-paths";
 import { nitro } from "nitro/vite";
 
 export default defineConfig({
+  // Pin the URL so `npm run dev` always binds 5173 on IPv4+IPv6.
+  // `strictPort` fails instead of silently moving to 5174 when another
+  // Vite is already running (that mismatch is what made localhost hang).
+  server: {
+    host: true,
+    port: 5173,
+    strictPort: true,
+  },
   plugins: [
     tsConfigPaths({ projects: ["./tsconfig.json"] }),
     tailwindcss(),
@@ -21,7 +29,10 @@ export default defineConfig({
         },
       },
     }),
-    nitro({ preset: "vercel" }),
+    // Vercel preset in `vite dev` enables env-runner's vercel-dev proxy
+    // (chunked keep-alive, `server: Vercel`). Browsers then sit on the
+    // document request. Keep the Vercel output only for `vercel build`.
+    nitro({ preset: process.env.VERCEL ? "vercel" : "node" }),
     viteReact(),
   ],
 });
