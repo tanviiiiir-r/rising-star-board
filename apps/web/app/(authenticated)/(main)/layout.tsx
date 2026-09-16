@@ -11,7 +11,10 @@ export default async function MainLayout({ children }: PropsWithChildren) {
 	const session = await getSession();
 
 	if (!session) {
-		redirect("/login");
+		const headerStore = await headers();
+		const nextPath = headerStore.get("x-pathname") || headerStore.get("x-invoke-path") || "/credits";
+		const redirectTo = nextPath.startsWith("/") ? nextPath : "/credits";
+		redirect(`/login?redirectTo=${encodeURIComponent(redirectTo)}`);
 	}
 
 	if (authConfig.users.enableOnboarding && !session.user.onboardingComplete) {

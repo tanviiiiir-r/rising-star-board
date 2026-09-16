@@ -1,7 +1,7 @@
 import { formatCents, formatCount } from "@board/lib/format";
 import { getBoardStats } from "@repo/database";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 15;
 
 export default async function AboutPage() {
 	const stats = await getBoardStats().catch(() => ({

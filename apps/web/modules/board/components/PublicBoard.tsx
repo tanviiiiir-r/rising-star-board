@@ -71,7 +71,7 @@ export function PublicBoard({
 				<div className="mx-auto max-w-[80rem] px-4 py-16 text-center sm:px-8" role="alert">
 					<h1 className="font-display text-3xl">The board couldn't load</h1>
 					<p className="mx-auto mt-2 max-w-sm text-sm text-muted-foreground">
-						{loadError} This is a loading problem, not an empty board — no listings were lost.
+						This is a loading problem, not an empty board — no listings were lost.
 					</p>
 					<Button className="mt-5" variant="primary" onClick={() => router.refresh()}>
 						Retry

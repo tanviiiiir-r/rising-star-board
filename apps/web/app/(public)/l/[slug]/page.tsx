@@ -3,7 +3,7 @@ import { BOARDS, getBoardListingBySlug, getBoardListings, type BoardKind } from 
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 15;
 
 function parseBoard(value?: string): BoardKind {
 	return value && (BOARDS as readonly string[]).includes(value) ? (value as BoardKind) : "all_time";

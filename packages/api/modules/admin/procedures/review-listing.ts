@@ -111,7 +111,9 @@ export const adminSetAllocation = adminProcedure
 			cents: z.number().int(),
 		}),
 	)
-	.handler(async ({ input }) => setAllocation(input.listingId, input.cents));
+	.handler(async ({ input, context }) =>
+		setAllocation(input.listingId, input.cents, context.user.id),
+	);
 
 export const freezeDaily = adminProcedure
 	.route({

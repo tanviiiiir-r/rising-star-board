@@ -1,4 +1,5 @@
 import { auth } from "@repo/auth";
+import { db } from "@repo/database";
 import { logger } from "@repo/logs";
 import { webhookHandler as paymentsWebhookHandler } from "@repo/payments";
 import { getBaseUrl } from "@repo/utils";
@@ -30,7 +31,15 @@ export const app = new Hono()
 	// Payments webhook handler
 	.post("/webhooks/payments", (c) => paymentsWebhookHandler(c.req.raw))
 	// Health check
-	.get("/health", (c) => c.text("OK"))
+	.get("/health", async (c) => {
+		try {
+			await db.$queryRaw`SELECT 1`;
+			return c.json({ ok: true }, 200);
+		} catch (error) {
+			logger.error(error);
+			return c.json({ ok: false }, 503);
+		}
+	})
 	// oRPC handlers (for RPC and OpenAPI)
 	.use("*", async (c, next) => {
 		const context = {

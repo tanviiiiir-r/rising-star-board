@@ -3,7 +3,7 @@ import { formatUtcDateLong } from "@board/lib/format";
 import { getDailyOverview } from "@repo/database";
 import type { Metadata } from "next";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 15;
 
 export const metadata: Metadata = {
 	title: { absolute: "Daily — Bid Ladder" },

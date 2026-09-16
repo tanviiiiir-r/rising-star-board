@@ -10,6 +10,7 @@ import Link from "next/link";
 import { useEffect } from "react";
 
 import { formatCents } from "../lib/format";
+import { ListingLogo } from "./ListingLogo";
 import { MovementBadge } from "./MovementBadge";
 
 function visitorKey() {
@@ -34,7 +35,7 @@ export function ListingDetail({
 }) {
 	const onBoard = listing.isBoardVisible && listing.rank != null;
 	const overtakeCents = listing.costToOvertakeCents;
-	const resultingRank = listing.rank ?? 1;
+	const resultingRank = listing.rank == null ? null : Math.max(1, listing.rank - 1);
 	const shortfallCents = Math.max(0, RANKING.minVisibleCents - listing.allocationCents);
 
 	const track = useMutation(orpc.board.trackEvent.mutationOptions());
@@ -79,9 +80,12 @@ export function ListingDetail({
 			<section className="mt-4 surface-card p-6 sm:p-8">
 				<div className="flex items-start justify-between gap-4">
 					<div className="min-w-0">
-						<span className="rounded-md border-[0.5px] border-border px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
-							{listing.categoryName}
-						</span>
+						<div className="flex items-center gap-3">
+							<ListingLogo name={listing.name} url={listing.url} className="size-11 rounded-full" />
+							<span className="rounded-md border-[0.5px] border-border px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+								{listing.categoryName}
+							</span>
+						</div>
 						<h1 className="mt-3 truncate font-display text-[2rem] leading-tight sm:text-4xl">
 							{listing.name}
 						</h1>
@@ -110,7 +114,7 @@ export function ListingDetail({
 							board.
 						</p>
 						<p className="mt-1 text-xs text-muted-foreground">
-							{boardLabel} board · paying that lands them at #{resultingRank}
+							{boardLabel} board · paying that lands them at #{resultingRank ?? "—"}
 							{above ? ` (currently ${above.name} at ${formatCents(above.allocationCents)})` : ""}.
 							{listing.rank === 1
 								? ` Claiming #1 costs ${formatCents(listing.costToClaimFirstCents)}.`

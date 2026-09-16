@@ -16,9 +16,11 @@ export function DashboardToasts() {
 			return;
 		}
 		toastSuccess(
-			topup || claimed
-				? "Credits added. Allocate them on an approved listing to take a rank."
-				: "Points converted to credits. Allocate them on an approved listing.",
+			claimed
+				? "Rank claimed. Your listing is live on the board."
+				: topup
+					? "Credits added. Allocate them on an approved listing to take a rank."
+					: "Points converted to credits. Allocate them on an approved listing.",
 		);
 		router.replace("/dashboard");
 	}, [searchParams, router]);

@@ -8,7 +8,7 @@ import {
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 15;
 
 export const metadata: Metadata = {
 	title: { absolute: "Bid Ladder" },
@@ -61,7 +61,7 @@ export default async function HomePage({
 		categories = catalog;
 	} catch (error) {
 		console.error("board load failed", error);
-		loadError = error instanceof Error ? error.message : "Board failed to load";
+		loadError = "The board couldn't load.";
 	}
 
 	return (

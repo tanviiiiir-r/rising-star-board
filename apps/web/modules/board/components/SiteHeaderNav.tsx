@@ -146,7 +146,7 @@ export function SiteHeaderNav({
 									<Link href="/admin/review">Review</Link>
 								</Button>
 							) : null}
-							<Button asChild size="sm" variant="secondary">
+							<Button asChild size="sm" variant="primary">
 								<Link href="/submit">
 									<Plus className="size-4" />
 									Submit
@@ -161,7 +161,7 @@ export function SiteHeaderNav({
 							<Button asChild size="sm" variant="outline">
 								<Link href="/login">Log in</Link>
 							</Button>
-							<Button asChild size="sm" variant="secondary">
+							<Button asChild size="sm" variant="primary">
 								<Link href="/submit">Submit</Link>
 							</Button>
 						</>

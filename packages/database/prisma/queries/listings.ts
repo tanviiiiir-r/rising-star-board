@@ -39,6 +39,17 @@ export async function getListingOwnerAndAllocation(listingId: string) {
 	});
 }
 
+/** Approve a paid homepage claim without the admin review audit path. */
+export async function approveListingForClaim(listingId: string, ownerId: string) {
+	return db.listing.updateMany({
+		where: { id: listingId, ownerId, status: "pending" },
+		data: {
+			status: "approved",
+			approvedAt: new Date(),
+		},
+	});
+}
+
 export async function listListingsForOwner(ownerId: string) {
 	return db.listing.findMany({
 		where: { ownerId },

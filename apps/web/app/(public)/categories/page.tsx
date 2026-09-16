@@ -2,7 +2,7 @@ import { formatCount } from "@board/lib/format";
 import { getCategoriesOverview } from "@repo/database";
 import Link from "next/link";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 15;
 
 export default async function CategoriesPage() {
 	const { hottest, categories } = await getCategoriesOverview().catch(() => ({

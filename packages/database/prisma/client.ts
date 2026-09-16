@@ -5,11 +5,7 @@ import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "./generated/client";
 
 const prismaClientSingleton = () => {
-	const connectionString =
-		process.env.DATABASE_URL ??
-		(process.env.VERCEL
-			? "postgresql://postgres:postgres@127.0.0.1:5432/postgres"
-			: undefined);
+	const connectionString = process.env.DATABASE_URL;
 
 	if (!connectionString) {
 		throw new Error("DATABASE_URL is not set");
@@ -18,15 +14,19 @@ const prismaClientSingleton = () => {
 	let host = "";
 	try {
 		host = new URL(connectionString.replace(/^postgres(ql)?:/, "http:")).hostname;
-		if (host === "127.0.0.1" || host === "localhost") {
-			console.error("DATABASE_URL points at localhost; Preview cannot reach Postgres");
-		}
 	} catch {
-		console.error("DATABASE_URL is not a valid Postgres URI");
+		throw new Error("DATABASE_URL is not a valid Postgres URI");
+	}
+
+	if (process.env.VERCEL && (host === "127.0.0.1" || host === "localhost")) {
+		throw new Error("DATABASE_URL points at localhost; Preview cannot reach Postgres");
 	}
 
 	const adapter = new PrismaPg({
 		connectionString,
+		max: 1,
+		connectionTimeoutMillis: 5000,
+		idleTimeoutMillis: 10000,
 		ssl:
 			host.includes("supabase.co") || host.includes("pooler.supabase.com")
 				? { rejectUnauthorized: false }

@@ -10,10 +10,12 @@ loadEnv({ path: join(repoRoot, ".env") });
 loadEnv({ path: join(repoRoot, ".env.local"), override: true });
 
 if (process.env.VERCEL) {
-	process.env.DATABASE_URL ??= "postgresql://postgres:postgres@127.0.0.1:5432/postgres";
-	process.env.DIRECT_URL ??= process.env.DATABASE_URL;
-	process.env.BETTER_AUTH_SECRET ??= "vercel-build-placeholder";
-	process.env.RESEND_API_KEY ??= "re_placeholder";
+	if (!process.env.BETTER_AUTH_SECRET) {
+		throw new Error("BETTER_AUTH_SECRET is not set");
+	}
+	if (!process.env.RESEND_API_KEY) {
+		throw new Error("RESEND_API_KEY is not set");
+	}
 }
 
 const withNextIntl = nextIntlPlugin("./modules/i18n/request.ts");
