@@ -6,6 +6,7 @@ import {
   getCategories,
   getCategoriesOverview,
   getDailyArchiveDates,
+  getDailyOverview,
   getListing,
 } from "./board.functions";
 import type { BoardKind } from "./ranking";
@@ -40,6 +41,12 @@ export const categoriesOverviewQuery = () =>
   queryOptions({
     queryKey: ["categories-overview"],
     queryFn: () => getCategoriesOverview(),
+  });
+
+export const dailyOverviewQuery = () =>
+  queryOptions({
+    queryKey: ["daily-overview"],
+    queryFn: () => getDailyOverview(),
   });
 
 export const dailyArchiveDatesQuery = () =>

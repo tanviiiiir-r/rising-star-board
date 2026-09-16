@@ -32,6 +32,10 @@ export const RANKING = {
 export const BOARDS = ["all_time", "today", "daily"] as const;
 export type BoardKind = (typeof BOARDS)[number];
 
+/** Homepage tabs. Daily is a header destination, not a peer tab. */
+export const HOME_BOARDS = ["all_time", "today"] as const;
+export type HomeBoard = (typeof HOME_BOARDS)[number];
+
 /** Movement hysteresis: sparse early traffic must not produce ±1 thrash. */
 export const MOVEMENT = {
   /** Minimum |delta| to show a number outside the top N. */

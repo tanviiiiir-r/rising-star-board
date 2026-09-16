@@ -1,6 +1,6 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
-import { FolderOpen, Info, MoreVertical, Plus, Scale } from "lucide-react";
+import { CalendarDays, FolderOpen, Info, MoreVertical, Plus, Scale } from "lucide-react";
 
 import { LogoMark } from "@/components/LogoMark";
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -18,10 +18,11 @@ export function SiteHeader() {
   const { user, loading } = useSession();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { onCategories, onAbout, onRules } = useRouterState({
+  const { onDaily, onCategories, onAbout, onRules } = useRouterState({
     select: (state) => {
       const path = state.location.pathname;
       return {
+        onDaily: path === "/daily" || path.startsWith("/daily/"),
         onCategories: path === "/categories",
         onAbout: path === "/about",
         onRules: path === "/how-ranking-works",
@@ -50,6 +51,14 @@ export function SiteHeader() {
           <Button
             asChild
             size="sm"
+            variant={onDaily ? "outline" : "ghost"}
+            className="hidden sm:inline-flex"
+          >
+            <Link to="/daily">Daily</Link>
+          </Button>
+          <Button
+            asChild
+            size="sm"
             variant={onCategories ? "outline" : "ghost"}
             className="hidden sm:inline-flex"
           >
@@ -73,11 +82,17 @@ export function SiteHeader() {
           </Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild className="sm:hidden">
-              <Button size="icon" variant="ghost" aria-label="More, including categories and about">
+              <Button size="icon" variant="ghost" aria-label="More, including Daily, categories and about">
                 <MoreVertical className="size-4" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
+              <DropdownMenuItem asChild>
+                <Link to="/daily">
+                  <CalendarDays className="size-4" />
+                  Daily
+                </Link>
+              </DropdownMenuItem>
               <DropdownMenuItem asChild>
                 <Link to="/categories">
                   <FolderOpen className="size-4" />

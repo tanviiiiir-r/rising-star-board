@@ -17,6 +17,33 @@ export function formatPoints(points: number): string {
   return `${points.toLocaleString("en-US")} pts`;
 }
 
+/** UTC calendar day as "September 15, 2026". */
+export function formatUtcDateLong(ymd: string): string {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(ymd);
+  if (!match) return ymd;
+  const date = new Date(Date.UTC(Number(match[1]), Number(match[2]) - 1, Number(match[3])));
+  return date.toLocaleDateString("en-US", {
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+    timeZone: "UTC",
+  });
+}
+
+export function msUntilUtcMidnight(now = Date.now()): number {
+  const date = new Date(now);
+  return Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate() + 1) - now;
+}
+
+/** "4:12:18 left" until the next UTC midnight. */
+export function formatUtcCountdown(ms: number): string {
+  const total = Math.max(0, Math.floor(ms / 1000));
+  const hours = Math.floor(total / 3600);
+  const minutes = Math.floor((total % 3600) / 60);
+  const seconds = total % 60;
+  return `${hours}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")} left`;
+}
+
 /** 16270 → "16,270" */
 export function formatCount(n: number): string {
   return n.toLocaleString("en-US");

@@ -14,7 +14,10 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as CategoriesRouteImport } from './routes/categories'
+import { Route as DailyRouteImport } from './routes/daily'
 import { Route as HowRankingWorksRouteImport } from './routes/how-ranking-works'
+import { Route as DailyIndexRouteImport } from './routes/daily.index'
+import { Route as DailyDateRouteImport } from './routes/daily.$date'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedSubmitRouteImport } from './routes/_authenticated/submit'
@@ -48,6 +51,11 @@ const CategoriesRoute = CategoriesRouteImport.update({
   path: '/categories',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DailyRoute = DailyRouteImport.update({
+  id: '/daily',
+  path: '/daily',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const HowRankingWorksRoute = HowRankingWorksRouteImport.update({
   id: '/how-ranking-works',
   path: '/how-ranking-works',
@@ -67,6 +75,16 @@ const AuthenticatedSubmitRoute = AuthenticatedSubmitRouteImport.update({
   id: '/submit',
   path: '/submit',
   getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const DailyIndexRoute = DailyIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => DailyRoute,
+} as any)
+const DailyDateRoute = DailyDateRouteImport.update({
+  id: '/$date',
+  path: '/$date',
+  getParentRoute: () => DailyRoute,
 } as any)
 const LSlugRoute = LSlugRouteImport.update({
   id: '/l/$slug',
@@ -99,11 +117,14 @@ export interface FileRoutesByFullPath {
   '/about': typeof AboutRoute
   '/auth': typeof AuthRoute
   '/categories': typeof CategoriesRoute
+  '/daily': typeof DailyRouteWithChildren
   '/how-ranking-works': typeof HowRankingWorksRoute
   '/admin': typeof AuthenticatedAdminRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/submit': typeof AuthenticatedSubmitRoute
   '/l/$slug': typeof LSlugRoute
+  '/daily/': typeof DailyIndexRoute
+  '/daily/$date': typeof DailyDateRoute
   '/credits/buy': typeof AuthenticatedCreditsBuyRoute
   '/api/stripe/checkout': typeof ApiStripeCheckoutRoute
   '/api/stripe/webhook': typeof ApiStripeWebhookRoute
@@ -114,11 +135,13 @@ export interface FileRoutesByTo {
   '/about': typeof AboutRoute
   '/auth': typeof AuthRoute
   '/categories': typeof CategoriesRoute
+  '/daily': typeof DailyIndexRoute
   '/how-ranking-works': typeof HowRankingWorksRoute
   '/admin': typeof AuthenticatedAdminRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/submit': typeof AuthenticatedSubmitRoute
   '/l/$slug': typeof LSlugRoute
+  '/daily/$date': typeof DailyDateRoute
   '/credits/buy': typeof AuthenticatedCreditsBuyRoute
   '/api/stripe/checkout': typeof ApiStripeCheckoutRoute
   '/api/stripe/webhook': typeof ApiStripeWebhookRoute
@@ -131,11 +154,14 @@ export interface FileRoutesById {
   '/about': typeof AboutRoute
   '/auth': typeof AuthRoute
   '/categories': typeof CategoriesRoute
+  '/daily': typeof DailyRouteWithChildren
   '/how-ranking-works': typeof HowRankingWorksRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/submit': typeof AuthenticatedSubmitRoute
   '/l/$slug': typeof LSlugRoute
+  '/daily/': typeof DailyIndexRoute
+  '/daily/$date': typeof DailyDateRoute
   '/_authenticated/credits/buy': typeof AuthenticatedCreditsBuyRoute
   '/api/stripe/checkout': typeof ApiStripeCheckoutRoute
   '/api/stripe/webhook': typeof ApiStripeWebhookRoute
@@ -148,11 +174,14 @@ export interface FileRouteTypes {
     | '/about'
     | '/auth'
     | '/categories'
+    | '/daily'
     | '/how-ranking-works'
     | '/admin'
     | '/dashboard'
     | '/submit'
     | '/l/$slug'
+    | '/daily/'
+    | '/daily/$date'
     | '/credits/buy'
     | '/api/stripe/checkout'
     | '/api/stripe/webhook'
@@ -163,11 +192,13 @@ export interface FileRouteTypes {
     | '/about'
     | '/auth'
     | '/categories'
+    | '/daily'
     | '/how-ranking-works'
     | '/admin'
     | '/dashboard'
     | '/submit'
     | '/l/$slug'
+    | '/daily/$date'
     | '/credits/buy'
     | '/api/stripe/checkout'
     | '/api/stripe/webhook'
@@ -179,11 +210,14 @@ export interface FileRouteTypes {
     | '/about'
     | '/auth'
     | '/categories'
+    | '/daily'
     | '/how-ranking-works'
     | '/_authenticated/admin'
     | '/_authenticated/dashboard'
     | '/_authenticated/submit'
     | '/l/$slug'
+    | '/daily/'
+    | '/daily/$date'
     | '/_authenticated/credits/buy'
     | '/api/stripe/checkout'
     | '/api/stripe/webhook'
@@ -196,6 +230,7 @@ export interface RootRouteChildren {
   AboutRoute: typeof AboutRoute
   AuthRoute: typeof AuthRoute
   CategoriesRoute: typeof CategoriesRoute
+  DailyRoute: typeof DailyRouteWithChildren
   HowRankingWorksRoute: typeof HowRankingWorksRoute
   LSlugRoute: typeof LSlugRoute
   ApiStripeCheckoutRoute: typeof ApiStripeCheckoutRoute
@@ -240,6 +275,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CategoriesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/daily': {
+      id: '/daily'
+      path: '/daily'
+      fullPath: '/daily'
+      preLoaderRoute: typeof DailyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/how-ranking-works': {
       id: '/how-ranking-works'
       path: '/how-ranking-works'
@@ -275,6 +317,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/daily/': {
+      id: '/daily/'
+      path: '/'
+      fullPath: '/daily/'
+      preLoaderRoute: typeof DailyIndexRouteImport
+      parentRoute: typeof DailyRoute
+    }
+    '/daily/$date': {
+      id: '/daily/$date'
+      path: '/$date'
+      fullPath: '/daily/$date'
+      preLoaderRoute: typeof DailyDateRouteImport
+      parentRoute: typeof DailyRoute
+    }
     '/_authenticated/credits/buy': {
       id: '/_authenticated/credits/buy'
       path: '/credits/buy'
@@ -306,6 +362,18 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface DailyRouteChildren {
+  DailyIndexRoute: typeof DailyIndexRoute
+  DailyDateRoute: typeof DailyDateRoute
+}
+
+const DailyRouteChildren: DailyRouteChildren = {
+  DailyIndexRoute: DailyIndexRoute,
+  DailyDateRoute: DailyDateRoute,
+}
+
+const DailyRouteWithChildren = DailyRoute._addFileChildren(DailyRouteChildren)
+
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
@@ -329,6 +397,7 @@ const rootRouteChildren: RootRouteChildren = {
   AboutRoute: AboutRoute,
   AuthRoute: AuthRoute,
   CategoriesRoute: CategoriesRoute,
+  DailyRoute: DailyRouteWithChildren,
   HowRankingWorksRoute: HowRankingWorksRoute,
   LSlugRoute: LSlugRoute,
   ApiStripeCheckoutRoute: ApiStripeCheckoutRoute,

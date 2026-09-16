@@ -294,6 +294,40 @@ async function loadDailyArchive(date: string, category?: string): Promise<BoardL
   return withCosts(listings);
 }
 
+export type DailyBoardPreview = {
+  date: string;
+  live: boolean;
+  listingCount: number;
+  listings: BoardListing[];
+};
+
+export type DailyOverview = {
+  launchedOn: string;
+  boards: DailyBoardPreview[];
+};
+
+/** Live today plus recent frozen UTC days. Top 3 rows per day — never padded. */
+export const getDailyOverview = createServerFn({ method: "GET" }).handler(
+  async (): Promise<DailyOverview> => {
+    const today = utcDateString();
+    const archiveDates = await getDailyArchiveDates();
+    const dates = [today, ...archiveDates.filter((date) => date !== today)].slice(0, 30);
+    const boards = await Promise.all(
+      dates.map(async (date) => {
+        const listings = date === today ? await loadLiveBoard("today") : await loadDailyArchive(date);
+        return {
+          date,
+          live: date === today,
+          listingCount: listings.length,
+          listings: listings.slice(0, 3),
+        };
+      }),
+    );
+    const launchedOn = dates[dates.length - 1] ?? today;
+    return { launchedOn, boards };
+  },
+);
+
 export type CategoryOverview = {
   id: string;
   slug: string;

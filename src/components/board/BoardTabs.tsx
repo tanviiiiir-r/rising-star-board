@@ -1,18 +1,17 @@
 import { cn } from "@/lib/utils";
-import { BOARDS, type BoardKind } from "@/lib/ranking";
+import { HOME_BOARDS, type HomeBoard } from "@/lib/ranking";
 
-const LABELS: Record<BoardKind, string> = {
+const LABELS: Record<HomeBoard, string> = {
   all_time: "All-time",
   today: "Today",
-  daily: "Daily",
 };
 
 export function BoardTabs({
   active,
   onChange,
 }: {
-  active: BoardKind;
-  onChange: (board: BoardKind) => void;
+  active: HomeBoard;
+  onChange: (board: HomeBoard) => void;
 }) {
   return (
     <div
@@ -20,7 +19,7 @@ export function BoardTabs({
       aria-label="Board"
       className="inline-flex items-center gap-1 rounded-full border-[0.5px] border-border p-1"
     >
-      {BOARDS.map((board) => {
+      {HOME_BOARDS.map((board) => {
         const isActive = board === active;
         return (
           <button

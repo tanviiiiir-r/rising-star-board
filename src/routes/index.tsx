@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate, useRouter } from "@tanstack/react-router";
+import { createFileRoute, redirect, Link, useNavigate, useRouter } from "@tanstack/react-router";
 import { useSuspenseQuery } from "@tanstack/react-query";
 
 import { BoardTabs } from "@/components/board/BoardTabs";
@@ -9,16 +9,9 @@ import { TodayRanking } from "@/components/board/TodayRanking";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
 import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { useBoardRealtime } from "@/hooks/useBoardRealtime";
-import { boardQuery, categoriesQuery, dailyArchiveDatesQuery } from "@/lib/queries";
-import { BOARDS, utcDateString, type BoardKind } from "@/lib/ranking";
+import { boardQuery, categoriesQuery } from "@/lib/queries";
+import { BOARDS, utcDateString, type BoardKind, type HomeBoard } from "@/lib/ranking";
 import { defaultShareMeta } from "@/lib/share-meta";
 
 type BoardSearch = { category?: string; board?: BoardKind; date?: string };
@@ -27,6 +20,10 @@ function parseBoard(value: unknown): BoardKind | undefined {
   return typeof value === "string" && (BOARDS as readonly string[]).includes(value)
     ? (value as BoardKind)
     : undefined;
+}
+
+function asHomeBoard(board: BoardKind | undefined): HomeBoard {
+  return board === "today" ? "today" : "all_time";
 }
 
 export const Route = createFileRoute("/")({
@@ -40,16 +37,22 @@ export const Route = createFileRoute("/")({
     }
     return out;
   },
+  beforeLoad: ({ search }) => {
+    if (search.board !== "daily") return;
+    const today = utcDateString();
+    if (search.date && search.date !== today) {
+      throw redirect({ to: "/daily/$date", params: { date: search.date } });
+    }
+    throw redirect({ to: "/daily" });
+  },
   loaderDeps: ({ search }) => ({
     category: search.category ?? "all",
-    board: search.board ?? ("all_time" as BoardKind),
-    date: search.date,
+    board: asHomeBoard(search.board),
   }),
   loader: async ({ context, deps }) => {
     await Promise.all([
       context.queryClient.ensureQueryData(categoriesQuery()),
-      context.queryClient.ensureQueryData(dailyArchiveDatesQuery()),
-      context.queryClient.ensureQueryData(boardQuery(deps.category, deps.board, deps.date)),
+      context.queryClient.ensureQueryData(boardQuery(deps.category, deps.board)),
       context.queryClient.ensureQueryData(boardQuery(deps.category, "today")),
     ]);
   },
@@ -94,18 +97,13 @@ function BoardError({ error }: { error: Error }) {
 }
 
 function BoardPage() {
-  const { category = "all", board = "all_time", date } = Route.useSearch();
+  const { category = "all", board: rawBoard } = Route.useSearch();
+  const board = asHomeBoard(rawBoard);
   const navigate = useNavigate();
   const { data: categories } = useSuspenseQuery(categoriesQuery());
-  const { data: archiveDates } = useSuspenseQuery(dailyArchiveDatesQuery());
-  const { data: listings } = useSuspenseQuery(boardQuery(category, board, date));
+  const { data: listings } = useSuspenseQuery(boardQuery(category, board));
   const { data: todayListings } = useSuspenseQuery(boardQuery(category, "today"));
   useBoardRealtime();
-
-  const today = utcDateString();
-  const selectedDate = board === "daily" ? (date ?? today) : today;
-  const dateOptions = [today, ...archiveDates.filter((d) => d !== today)];
-  const archivedDaily = board === "daily" && selectedDate !== today;
 
   const setSearch = (next: Partial<BoardSearch>) =>
     navigate({ to: "/", search: (prev) => ({ ...prev, ...next }) });
@@ -124,28 +122,10 @@ function BoardPage() {
 
           <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
             <BoardTabs active={board} onChange={(next) => setSearch({ board: next })} />
-            {board === "daily" ? (
-              <Select value={selectedDate} onValueChange={(value) => setSearch({ date: value })}>
-                <SelectTrigger className="h-9 w-[160px] rounded-full">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {dateOptions.map((option) => (
-                    <SelectItem key={option} value={option}>
-                      {option}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            ) : null}
           </div>
 
-          <div className="mt-12">
-            <ClaimRankControl
-              listings={listings}
-              categories={categories}
-              archived={archivedDaily}
-            />
+          <div id="claim" className="mt-12">
+            <ClaimRankControl listings={listings} categories={categories} />
           </div>
 
           <div className="mt-14 grid gap-8 lg:grid-cols-[minmax(0,1fr)_16rem] lg:items-start lg:gap-10">
