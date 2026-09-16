@@ -1,0 +1,7 @@
+graphify-out/
+legacy/
+**/.next/
+**/.turbo/
+**/dist/
+**/coverage/
+**/node_modules/

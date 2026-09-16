@@ -1,0 +1,485 @@
+datasource db {
+  provider = "postgresql"
+}
+
+generator client {
+  provider   = "prisma-client"
+  output     = "./generated"
+  engineType = "client"
+}
+
+generator zod {
+  provider = "prisma-zod-generator"
+  output   = "./zod"
+  config   = "./zod-generator.config.json"
+}
+
+model User {
+  id                       String                       @id @default(uuid()) @db.Uuid
+  name                     String
+  email                    String
+  emailVerified            Boolean
+  image                    String?
+  createdAt                DateTime
+  updatedAt                DateTime
+  username                 String?
+  role                     String?
+  banned                   Boolean?
+  banReason                String?
+  banExpires               DateTime?
+  onboardingComplete       Boolean                      @default(false)
+  paymentsCustomerId       String?
+  locale                   String?
+  displayUsername          String?
+  twoFactorEnabled         Boolean?
+  lastActiveOrganizationId String?
+  sessions                 Session[]
+  accounts                 Account[]
+  passkeys                 Passkey[]
+  invitations              Invitation[]
+  purchases                Purchase[]
+  members                  Member[]
+  twofactors               TwoFactor[]
+  notifications            Notification[]
+  notificationPreferences  UserNotificationPreference[]
+  listings                 Listing[]
+  wallet                   Wallet?
+  creditLedger             CreditLedger[]
+  pointLedger              PointLedger[]
+  adminAuditLog            AdminAuditLog[]
+  userRoles                UserRole[]
+  profile                  Profile?
+
+  @@unique([email])
+  @@unique([username])
+  @@map("user")
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  expiresAt DateTime
+  ipAddress String?
+  userAgent String?
+  userId    String   @db.Uuid
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  impersonatedBy String?
+
+  activeOrganizationId String?
+
+  token     String
+  createdAt DateTime
+  updatedAt DateTime
+
+  @@unique([token])
+  @@index([userId])
+  @@map("session")
+}
+
+model Account {
+  id           String    @id @default(cuid())
+  accountId    String
+  providerId   String
+  userId       String    @db.Uuid
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken  String?   @db.Text
+  refreshToken String?   @db.Text
+  idToken      String?   @db.Text
+  expiresAt    DateTime?
+  password     String?
+
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  createdAt             DateTime
+  updatedAt             DateTime
+
+  @@index([userId])
+  @@map("account")
+}
+
+model Verification {
+  id         String   @id @default(cuid())
+  identifier String
+  value      String   @db.Text
+  expiresAt  DateTime
+
+  createdAt DateTime?
+  updatedAt DateTime?
+
+  @@index([identifier])
+  @@map("verification")
+}
+
+model Passkey {
+  id           String    @id @default(cuid())
+  name         String?
+  publicKey    String
+  userId       String   @db.Uuid
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  credentialID String
+  counter      Int
+  deviceType   String
+  backedUp     Boolean
+  transports   String?
+  aaguid       String?
+  createdAt    DateTime?
+
+  @@index([userId])
+  @@index([credentialID])
+  @@map("passkey")
+}
+
+model TwoFactor {
+  id          String @id @default(cuid())
+  secret      String
+  backupCodes String
+  userId      String @db.Uuid
+  user        User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([secret])
+  @@index([userId])
+  @@map("twoFactor")
+}
+
+model Organization {
+  id                 String       @id @default(cuid())
+  name               String
+  slug               String?
+  logo               String?
+  createdAt          DateTime
+  metadata           String?
+  paymentsCustomerId String?
+  members            Member[]
+  invitations        Invitation[]
+  purchases          Purchase[]
+
+  @@unique([slug])
+  @@map("organization")
+}
+
+model Member {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  userId         String       @db.Uuid
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role           String
+  createdAt      DateTime
+
+  @@unique([organizationId, userId])
+  @@index([organizationId])
+  @@index([userId])
+  @@map("member")
+}
+
+model Invitation {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  email          String
+  role           String?
+  status         String
+  expiresAt      DateTime
+  inviterId      String       @db.Uuid
+  user           User         @relation(fields: [inviterId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@index([organizationId])
+  @@index([email])
+  @@map("invitation")
+}
+
+enum PurchaseType {
+  SUBSCRIPTION
+  ONE_TIME
+}
+
+model Purchase {
+  id             String        @id @default(cuid())
+  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId String?
+  user           User?         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId         String?       @db.Uuid
+  type           PurchaseType
+  customerId     String
+  subscriptionId String?       @unique
+  priceId        String
+  status         String?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  @@index([subscriptionId])
+  @@map("purchase")
+}
+
+enum NotificationTarget {
+  IN_APP
+  EMAIL
+}
+
+enum NotificationType {
+  WELCOME
+  APP_UPDATE
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String           @db.Uuid
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      NotificationType
+  data      Json             @default("{}")
+  link      String?
+  read      Boolean          @default(false)
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+
+  @@index([userId])
+  @@map("notification")
+}
+
+model UserNotificationPreference {
+  id        String             @id @default(cuid())
+  userId    String             @db.Uuid
+  user      User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      NotificationType
+  target    NotificationTarget
+  createdAt DateTime           @default(now())
+
+  @@unique([userId, type, target])
+  @@map("user_notification_preference")
+}
+
+enum ListingStatus {
+  pending
+  approved
+  rejected
+
+  @@map("listing_status")
+}
+
+enum EventKind {
+  view
+  share
+
+  @@map("event_kind")
+}
+
+enum CategoryStatus {
+  active
+  hidden
+
+  @@map("category_status")
+}
+
+enum CreditLedgerType {
+  admin_grant
+  allocation
+  allocation_release
+  topup
+  points_conversion
+  adjustment
+
+  @@map("credit_ledger_type")
+}
+
+enum PointLedgerType {
+  admin_grant
+  conversion
+  adjustment
+
+  @@map("point_ledger_type")
+}
+
+enum AppRole {
+  admin
+  user
+
+  @@map("app_role")
+}
+
+model Category {
+  id          String         @id @default(uuid()) @db.Uuid
+  slug        String         @unique
+  name        String
+  sortOrder   Int            @default(0) @map("sort_order")
+  description String         @default("")
+  status      CategoryStatus @default(active)
+  createdAt   DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  listings    Listing[]
+
+  @@map("categories")
+}
+
+model Listing {
+  id               String         @id @default(uuid()) @db.Uuid
+  ownerId          String         @map("owner_id") @db.Uuid
+  owner            User           @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  categoryId       String         @map("category_id") @db.Uuid
+  category         Category       @relation(fields: [categoryId], references: [id])
+  name             String
+  tagline          String
+  url              String
+  description      String         @default("")
+  slug             String         @unique
+  status           ListingStatus  @default(pending)
+  rejectionReason  String?        @map("rejection_reason")
+  approvedAt       DateTime?      @map("approved_at") @db.Timestamptz(6)
+  allocationCents  Int            @default(0) @map("allocation_cents")
+  allocationSetAt  DateTime?      @map("allocation_set_at") @db.Timestamptz(6)
+  createdAt        DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime       @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  ranking          Ranking?
+  todayRanking     TodayRanking?
+  events           Event[]
+  dailyAllocations DailyAllocation[]
+  dailySnapshots   DailyRankSnapshot[]
+  adminAuditLog    AdminAuditLog[]
+
+  @@index([status])
+  @@index([categoryId])
+  @@index([allocationCents, allocationSetAt, id])
+  @@map("listings")
+}
+
+model Ranking {
+  listingId     String   @id @map("listing_id") @db.Uuid
+  listing       Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  score         Decimal  @default(0) @db.Decimal
+  rank          Int
+  previousRank  Int?     @map("previous_rank")
+  uniqueViews   Int      @default(0) @map("unique_views")
+  shares        Int      @default(0)
+  computedAt    DateTime @default(now()) @map("computed_at") @db.Timestamptz(6)
+
+  @@map("rankings")
+}
+
+model TodayRanking {
+  listingId     String   @id @map("listing_id") @db.Uuid
+  listing       Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  score         Decimal  @default(0) @db.Decimal
+  rank          Int
+  previousRank  Int?     @map("previous_rank")
+  uniqueViews   Int      @default(0) @map("unique_views")
+  shares        Int      @default(0)
+  computedAt    DateTime @default(now()) @map("computed_at") @db.Timestamptz(6)
+
+  @@map("today_rankings")
+}
+
+model Event {
+  id         String    @id @default(uuid()) @db.Uuid
+  listingId  String    @map("listing_id") @db.Uuid
+  listing    Listing   @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  kind       EventKind
+  visitorKey String    @map("visitor_key")
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@unique([listingId, kind, visitorKey])
+  @@index([listingId])
+  @@map("events")
+}
+
+model Wallet {
+  userId           String   @id @map("user_id") @db.Uuid
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  availableCents   Int      @default(0) @map("available_cents")
+  availablePoints  Int      @default(0) @map("available_points")
+  updatedAt        DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@map("wallets")
+}
+
+model CreditLedger {
+  id             String           @id @default(uuid()) @db.Uuid
+  userId         String           @map("user_id") @db.Uuid
+  user           User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  amountCents    Int              @map("amount_cents")
+  type           CreditLedgerType
+  referenceType  String?          @map("reference_type")
+  referenceId    String?          @map("reference_id") @db.Uuid
+  reason         String?
+  idempotencyKey String?          @unique @map("idempotency_key")
+  createdAt      DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([userId, createdAt])
+  @@map("credit_ledger")
+}
+
+model PointLedger {
+  id             String          @id @default(uuid()) @db.Uuid
+  userId         String          @map("user_id") @db.Uuid
+  user           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  amountPoints   Int             @map("amount_points")
+  type           PointLedgerType
+  referenceType  String?         @map("reference_type")
+  referenceId    String?         @map("reference_id") @db.Uuid
+  reason         String?
+  idempotencyKey String?         @unique @map("idempotency_key")
+  createdAt      DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([userId, createdAt])
+  @@map("point_ledger")
+}
+
+model DailyAllocation {
+  listingId        String   @map("listing_id") @db.Uuid
+  listing          Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  utcDate          DateTime @map("utc_date") @db.Date
+  amountCents      Int      @default(0) @map("amount_cents")
+  firstAllocatedAt DateTime @default(now()) @map("first_allocated_at") @db.Timestamptz(6)
+
+  @@id([listingId, utcDate])
+  @@map("daily_allocations")
+}
+
+model DailyRankSnapshot {
+  listingId       String   @map("listing_id") @db.Uuid
+  listing         Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  utcDate         DateTime @map("utc_date") @db.Date
+  rank            Int
+  allocationCents Int      @map("allocation_cents")
+  uniqueViews     Int      @default(0) @map("unique_views")
+  shares          Int      @default(0)
+  frozenAt        DateTime @map("frozen_at") @db.Timestamptz(6)
+
+  @@id([listingId, utcDate])
+  @@map("daily_rank_snapshots")
+}
+
+model AdminAuditLog {
+  id        String   @id @default(uuid()) @db.Uuid
+  adminId   String   @map("admin_id") @db.Uuid
+  admin     User     @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  listingId String?  @map("listing_id") @db.Uuid
+  listing   Listing? @relation(fields: [listingId], references: [id], onDelete: SetNull)
+  action    String
+  reason    String?
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@map("admin_audit_log")
+}
+
+model UserRole {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role      AppRole
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@unique([userId, role])
+  @@map("user_roles")
+}
+
+model Profile {
+  id          String   @id @db.Uuid
+  user        User     @relation(fields: [id], references: [id], onDelete: Cascade)
+  displayName String?  @map("display_name")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@map("profiles")
+}
+

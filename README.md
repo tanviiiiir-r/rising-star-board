@@ -1,20 +1,13 @@
-# Bid Ladder (Rising Star Board)
+# Bid Ladder
 
-Live allocation board for early-stage AI/SaaS/tools. Rank is credits in cents, not views.
+Public allocation board. Rank is what you allocated.
 
-**Stack:** TanStack Start + Vite, Vercel, owned Supabase.
+This branch is the supastarter Next.js monorepo. `apps/web` is the product. Ranking stays in Postgres. The TanStack app lives in `legacy/tanstack/` until cutover.
 
-**GitHub:** https://github.com/tanviiiiir-r/rising-star-board
-
-Company OS (separate): https://github.com/tanviiiiir-r/bid-ladder
-
-## Local
-
-```bash
-cp .env.example .env.local
-# fill Supabase + Stripe values
-bun install
-bun run dev
+```sh
+pnpm install
+pnpm --filter @repo/database generate
+pnpm --filter web dev
 ```
 
-Do not invent prices, fake rankings, or pay-to-rank as the truth layer.
+Cutover steps: [docs/cutover.md](docs/cutover.md).

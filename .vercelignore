@@ -1,0 +1,15 @@
+node_modules
+.next
+.turbo
+.output
+graphify-out
+.env
+.env.local
+.env*.local
+.cursor
+.claude
+legacy/tanstack/node_modules
+**/.next
+**/.turbo
+**/coverage
+**/.prisma-zod-generator-manifest.json

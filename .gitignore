@@ -1,42 +1,54 @@
-# Logs
-logs
-*.log
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# dependencies
+node_modules
+.pnp
+.pnp.js
+
+# testing
+coverage
+
+# next.js
+.next/
+out/
+build
+.swc/
+
+# misc
+.DS_Store
+*.pem
+
+# debug
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-pnpm-debug.log*
-lerna-debug.log*
 
-node_modules
-dist
-dist-ssr
-.output
-.vinxi
-.tanstack/**
-.nitro
-*.local
-
-# Vercel
-.vercel
-
-# Wrangler / Cloudflare
-.wrangler/
-.dev.vars
-
-# Editor directories and files
-.vscode/*
-!.vscode/extensions.json
-.idea
-.DS_Store
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
-
-# secrets
+# local env files
 .env
 .env.local
-.env.*.local
-.dev.vars
-!.env.example
+.env.development.local
+.env.test.local
+.env.production
+.env.production.local
+
+# turbo
+.turbo
+
+# ui
+dist/
+
+# typescript
+*.tsbuildinfo
+
+# other 
+.react-email/
+.content-collections/
+.prisma-zod-generator-manifest.json
+.vercel
+
+# Bid Ladder leftovers
+.tanstack/**
+.output
+.vintex
+.nitro
+graphify-out/

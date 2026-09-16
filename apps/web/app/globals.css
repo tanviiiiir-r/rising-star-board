@@ -1,0 +1,87 @@
+@import "tailwindcss";
+@import "./theme.css";
+@import "./tailwind-animate.css";
+
+@source "../../../packages/ui/components";
+@source "../node_modules/streamdown/dist/*.js";
+
+@variant dark (&:where(.dark, .dark *));
+
+@utility container {
+	margin-inline: auto;
+	padding-inline: 1.5rem;
+	width: 100%;
+	max-width: var(--container-7xl);
+}
+
+@utility no-scrollbar {
+	&::-webkit-scrollbar {
+		display: none;
+	}
+	-ms-overflow-style: none;
+	scrollbar-width: none;
+}
+
+@utility board-grid-bg {
+	background-color: var(--color-background);
+}
+
+@utility primary-wash {
+	background-color: color-mix(in oklab, var(--primary) 8%, var(--card));
+	border: 2px solid var(--primary);
+}
+
+@utility surface-card {
+	border-radius: 0.75rem;
+	background-color: var(--color-card);
+	border: 0.5px solid var(--color-border);
+}
+
+@utility rank-number {
+	font-family: var(--font-mono);
+	font-variant-numeric: tabular-nums;
+	font-weight: 500;
+	letter-spacing: -0.02em;
+	color: var(--color-allocation);
+}
+
+@utility allocation-price {
+	font-family: var(--font-sans);
+	font-variant-numeric: tabular-nums;
+	font-weight: 500;
+	letter-spacing: -0.04em;
+	color: var(--color-allocation);
+}
+
+@layer base {
+	*,
+	::after,
+	::before,
+	::backdrop,
+	::file-selector-button {
+		border-color: var(--border);
+	}
+
+	body {
+		background-color: var(--color-background);
+		color: var(--color-foreground);
+		font-family: var(--font-sans);
+		font-weight: 400;
+		letter-spacing: -0.011em;
+		-webkit-font-smoothing: antialiased;
+	}
+
+	h1,
+	h2,
+	h3,
+	.font-display {
+		font-family: var(--font-display);
+		font-weight: 500;
+		letter-spacing: -0.022em;
+		line-height: 1.05;
+	}
+
+	svg.lucide {
+		stroke-width: 1.5;
+	}
+}
