@@ -1,20 +1,24 @@
 import { createFileRoute, redirect, Link, useNavigate, useRouter } from "@tanstack/react-router";
+import { useState } from "react";
 import { useSuspenseQuery } from "@tanstack/react-query";
 
+import { BoardPagination } from "@/components/board/BoardPagination";
 import { BoardTabs } from "@/components/board/BoardTabs";
 import { CategoryFilter } from "@/components/board/CategoryFilter";
 import { ClaimRankControl } from "@/components/board/ClaimRankControl";
+import { LatestActivity } from "@/components/board/LatestActivity";
 import { ListingCard } from "@/components/board/ListingCard";
 import { TodayRanking } from "@/components/board/TodayRanking";
+import { TopTwentyDivider } from "@/components/board/TopTwentyDivider";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
 import { Button } from "@/components/ui/button";
 import { useBoardRealtime } from "@/hooks/useBoardRealtime";
 import { boardQuery, categoriesQuery } from "@/lib/queries";
-import { BOARDS, utcDateString, type BoardKind, type HomeBoard } from "@/lib/ranking";
+import { BOARDS, RANKING, utcDateString, type BoardKind, type HomeBoard } from "@/lib/ranking";
 import { defaultShareMeta } from "@/lib/share-meta";
 
-type BoardSearch = { category?: string; board?: BoardKind; date?: string };
+type BoardSearch = { category?: string; board?: BoardKind; date?: string; page?: number };
 
 function parseBoard(value: unknown): BoardKind | undefined {
   return typeof value === "string" && (BOARDS as readonly string[]).includes(value)
@@ -35,6 +39,14 @@ export const Route = createFileRoute("/")({
     if (typeof search["date"] === "string" && /^\d{4}-\d{2}-\d{2}$/.test(search["date"])) {
       out.date = search["date"];
     }
+    const rawPage = search["page"];
+    const page =
+      typeof rawPage === "number"
+        ? rawPage
+        : typeof rawPage === "string" && /^\d+$/.test(rawPage)
+          ? Number(rawPage)
+          : undefined;
+    if (page != null && page >= 2) out.page = Math.floor(page);
     return out;
   },
   beforeLoad: ({ search }) => {
@@ -97,7 +109,7 @@ function BoardError({ error }: { error: Error }) {
 }
 
 function BoardPage() {
-  const { category = "all", board: rawBoard } = Route.useSearch();
+  const { category = "all", board: rawBoard, page: requestedPage } = Route.useSearch();
   const board = asHomeBoard(rawBoard);
   const navigate = useNavigate();
   const { data: categories } = useSuspenseQuery(categoriesQuery());
@@ -105,8 +117,30 @@ function BoardPage() {
   const { data: todayListings } = useSuspenseQuery(boardQuery(category, "today"));
   useBoardRealtime();
 
+  const [claimCents, setClaimCents] = useState<number | null>(null);
+  const pageSize = RANKING.boardPageSize;
+  const pageCount = Math.max(1, Math.ceil(listings.length / pageSize));
+  const page = Math.min(Math.max(requestedPage ?? 1, 1), pageCount);
+  const start = (page - 1) * pageSize;
+  const pageListings = listings.slice(start, start + pageSize);
+  const pastTopTwenty = listings.some((listing) => (listing.rank ?? 0) > RANKING.topTwenty);
+
   const setSearch = (next: Partial<BoardSearch>) =>
-    navigate({ to: "/", search: (prev) => ({ ...prev, ...next }) });
+    navigate({
+      to: "/",
+      search: (prev) => {
+        const filterChanged = next.category !== undefined || next.board !== undefined;
+        if (!filterChanged) return { ...prev, ...next };
+        const { page: _page, date: _date, ...rest } = prev;
+        return { ...rest, ...next };
+      },
+    });
+
+  function handleClaimRank(cents: number) {
+    setClaimCents(cents);
+    document.getElementById("claim")?.scrollIntoView({ behavior: "smooth", block: "center" });
+    window.setTimeout(() => document.getElementById("claim-target")?.focus(), 350);
+  }
 
   return (
     <div className="min-h-screen">
@@ -125,19 +159,49 @@ function BoardPage() {
           </div>
 
           <div id="claim" className="mt-12">
-            <ClaimRankControl listings={listings} categories={categories} />
+            <ClaimRankControl
+              listings={listings}
+              categories={categories}
+              requestedCents={claimCents}
+            />
           </div>
 
           <div className="mt-14 grid gap-8 lg:grid-cols-[minmax(0,1fr)_16rem] lg:items-start lg:gap-10">
-            <div className="flex flex-col gap-3">
-              {listings.map((listing) => (
-                <ListingCard key={listing.id} listing={listing} />
-              ))}
+            <div>
+              {pageListings.map((listing, index) => {
+                const absoluteIndex = start + index;
+                return (
+                  <div
+                    key={listing.id}
+                    className={absoluteIndex > 0 ? "border-t border-border" : undefined}
+                  >
+                    <ListingCard listing={listing} onClaimRank={handleClaimRank} />
+                    {listing.rank === 10 ? <LatestActivity listings={listings} /> : null}
+                    {listing.rank === RANKING.topTwenty && pastTopTwenty ? (
+                      <TopTwentyDivider />
+                    ) : null}
+                  </div>
+                );
+              })}
+              {page === 1 && !listings.some((listing) => listing.rank === 10) ? (
+                <LatestActivity listings={listings} />
+              ) : null}
             </div>
             <div className="hidden lg:block">
               {todayListings.length > 0 ? <TodayRanking listings={todayListings} /> : null}
             </div>
           </div>
+
+          <BoardPagination
+            page={page}
+            pageSize={pageSize}
+            total={listings.length}
+            search={{
+              ...(category !== "all" ? { category } : {}),
+              ...(board !== "all_time" ? { board } : {}),
+              ...(page > 1 ? { page } : {}),
+            }}
+          />
 
           <p className="mt-8 text-center text-xs text-muted-foreground">
             Credits allocated to a listing determine its rank. Equal allocations are broken by who

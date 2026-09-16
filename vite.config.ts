@@ -32,7 +32,7 @@ export default defineConfig({
     // Vercel preset in `vite dev` enables env-runner's vercel-dev proxy
     // (chunked keep-alive, `server: Vercel`). Browsers then sit on the
     // document request. Keep the Vercel output only for `vercel build`.
-    nitro({ preset: process.env.VERCEL ? "vercel" : "node" }),
+    nitro({ preset: process.env["VERCEL"] ? "vercel" : "node" }),
     viteReact(),
   ],
 });

@@ -19,6 +19,10 @@ export const RANKING = {
   incrementCents: 100,
   minVisibleCents: 1000,
   numberOnePremiumCents: 500,
+  /** Visual break after this rank on the public board. */
+  topTwenty: 20,
+  /** Public board page size (Outbid shows 50). */
+  boardPageSize: 50,
   /** Retired. Views do not affect rank. Kept for existing route compile. */
   viewWeight: 3,
   /** Retired. Shares do not affect rank. Kept for existing route compile. */
@@ -132,6 +136,12 @@ export function costToClaimFirstCents(
     return RANKING.minVisibleCents;
   }
   return currentFirstAllocationCents + RANKING.numberOnePremiumCents;
+}
+
+/** Cents needed to occupy this listing's current rank. */
+export function costToClaimRankCents(occupantCents: number, occupantIsFirst: boolean): number {
+  const step = occupantIsFirst ? RANKING.numberOnePremiumCents : RANKING.incrementCents;
+  return occupantCents + step;
 }
 
 /** Cents needed to overtake the listing immediately above. 0 if nobody is above. */

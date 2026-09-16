@@ -23,9 +23,9 @@ type SubmitSearch = { url?: string; categoryId?: string; cents?: number };
 export const Route = createFileRoute("/_authenticated/submit")({
   validateSearch: (search: Record<string, unknown>): SubmitSearch => {
     const out: SubmitSearch = {};
-    if (typeof search.url === "string") out.url = search.url;
-    if (typeof search.categoryId === "string") out.categoryId = search.categoryId;
-    const centsRaw = search.cents;
+    if (typeof search["url"] === "string") out.url = search["url"];
+    if (typeof search["categoryId"] === "string") out.categoryId = search["categoryId"];
+    const centsRaw = search["cents"];
     const cents = typeof centsRaw === "number" ? centsRaw : Number(centsRaw);
     if (Number.isInteger(cents) && cents > 0) out.cents = cents;
     return out;

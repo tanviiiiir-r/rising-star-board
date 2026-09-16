@@ -1,5 +1,6 @@
 import { Link } from "@tanstack/react-router";
 
+import { ListingLogo } from "@/components/board/ListingLogo";
 import type { BoardListing } from "@/lib/board.functions";
 import { formatCents } from "@/lib/format";
 
@@ -38,6 +39,12 @@ export function DailyListingRow({
 
   return (
     <article className="flex gap-3 rounded-xl bg-background/80 px-3 py-3">
+      <ListingLogo
+        name={listing.name}
+        url={listing.url}
+        logoUrl={listing.logoUrl}
+        className="mt-0.5 size-8 rounded-full"
+      />
       <div className="flex w-8 shrink-0 flex-col items-center pt-0.5">
         <span className="rank-number text-base leading-none">{listing.rank ?? "—"}</span>
       </div>

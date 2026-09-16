@@ -20,6 +20,8 @@ export type BoardListing = {
   url: string;
   description: string;
   approvedAt: string | null;
+  logoUrl: string | null;
+  allocationSetAt: string | null;
   categoryName: string;
   categorySlug: string;
   rank: number | null;
@@ -52,6 +54,8 @@ type ListingRow = {
   url: string;
   description: string;
   approved_at: string | null;
+  logo_url: string | null;
+  allocation_set_at: string | null;
   allocation_cents: number | null;
   categories: { name: string; slug: string } | null;
   rankings?: RankEmbed;
@@ -59,7 +63,7 @@ type ListingRow = {
 };
 
 const LISTING_SELECT =
-  "id, slug, name, tagline, url, description, approved_at, allocation_cents, categories(name, slug), rankings(rank, previous_rank, unique_views, shares, computed_at, score), today_rankings(rank, previous_rank, unique_views, shares, computed_at, score)";
+  "id, slug, name, tagline, url, logo_url, description, approved_at, allocation_cents, allocation_set_at, categories(name, slug), rankings(rank, previous_rank, unique_views, shares, computed_at, score), today_rankings(rank, previous_rank, unique_views, shares, computed_at, score)";
 
 const boardInput = z.object({
   category: z.string().optional(),
@@ -90,6 +94,8 @@ function toListing(row: ListingRow, board: BoardKind): BoardListing {
     url: row.url,
     description: row.description,
     approvedAt: row.approved_at,
+    logoUrl: row.logo_url,
+    allocationSetAt: row.allocation_set_at,
     categoryName: row.categories?.name ?? "—",
     categorySlug: row.categories?.slug ?? "",
     rank: rank?.rank ?? null,
@@ -242,7 +248,7 @@ async function loadDailyArchive(date: string, category?: string): Promise<BoardL
   const { data: rows, error } = await supabase
     .from("daily_rank_snapshots")
     .select(
-      "utc_date, rank, allocation_cents, unique_views, shares, frozen_at, listings!inner(id, slug, name, tagline, url, description, approved_at, allocation_cents, status, categories(name, slug))",
+      "utc_date, rank, allocation_cents, unique_views, shares, frozen_at, listings!inner(id, slug, name, tagline, url, logo_url, description, approved_at, allocation_cents, allocation_set_at, status, categories(name, slug))",
     )
     .eq("utc_date", date)
     .eq("listings.status", "approved")
@@ -275,6 +281,8 @@ async function loadDailyArchive(date: string, category?: string): Promise<BoardL
         url: listing.url,
         description: listing.description,
         approvedAt: listing.approved_at,
+        logoUrl: listing.logo_url,
+        allocationSetAt: listing.allocation_set_at,
         categoryName: listing.categories?.name ?? "—",
         categorySlug: listing.categories?.slug ?? "",
         rank: row.rank,

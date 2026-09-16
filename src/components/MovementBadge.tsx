@@ -7,6 +7,7 @@ type Props = {
   rank: number | null;
   previousRank: number | null;
   className?: string;
+  compact?: boolean;
 };
 
 const neutral =
@@ -16,7 +17,7 @@ const neutral =
  * Movement vs the previous ranking recompute. Real persisted ranks only,
  * with hysteresis so single-position noise outside the top 10 reads as Flat.
  */
-export function MovementBadge({ rank, previousRank, className }: Props) {
+export function MovementBadge({ rank, previousRank, className, compact: _compact }: Props) {
   const movement = getMovement(rank, previousRank);
 
   if (movement.kind === "none") return null;

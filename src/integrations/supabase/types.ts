@@ -231,6 +231,7 @@ export type Database = {
           tagline: string
           updated_at: string
           url: string
+          logo_url: string | null
         }
         Insert: {
           allocation_cents?: number
@@ -248,6 +249,7 @@ export type Database = {
           tagline: string
           updated_at?: string
           url: string
+          logo_url?: string | null
         }
         Update: {
           allocation_cents?: number
@@ -265,6 +267,7 @@ export type Database = {
           tagline?: string
           updated_at?: string
           url?: string
+          logo_url?: string | null
         }
         Relationships: [
           {
@@ -491,6 +494,10 @@ export type Database = {
       }
       set_allocation: {
         Args: { _listing_id: string; _new_cents: number }
+        Returns: Json
+      }
+      service_convert_points: {
+        Args: { _idempotency_key: string; _points: number; _user_id: string }
         Returns: Json
       }
     }
