@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate, useRouter } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate, useRouter } from "@tanstack/react-router";
 import { useSuspenseQuery } from "@tanstack/react-query";
 
 import { BoardTabs } from "@/components/board/BoardTabs";
@@ -6,6 +6,7 @@ import { CategoryFilter } from "@/components/board/CategoryFilter";
 import { ClaimRankControl } from "@/components/board/ClaimRankControl";
 import { ListingCard } from "@/components/board/ListingCard";
 import { TodayRanking } from "@/components/board/TodayRanking";
+import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
 import { Button } from "@/components/ui/button";
 import {
@@ -157,6 +158,19 @@ function BoardPage() {
               {todayListings.length > 0 ? <TodayRanking listings={todayListings} /> : null}
             </div>
           </div>
+
+          <p className="mt-8 text-center text-xs text-muted-foreground">
+            Credits allocated to a listing determine its rank. Equal allocations are broken by who
+            got there first —{" "}
+            <Link
+              to="/how-ranking-works"
+              className="text-foreground underline-offset-2 hover:underline"
+            >
+              see how ranking works
+            </Link>
+            .
+          </p>
+          <SiteFooter />
         </div>
       </main>
     </div>
