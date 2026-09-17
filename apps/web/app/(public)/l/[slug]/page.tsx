@@ -1,5 +1,6 @@
 import { ListingDetail } from "@board/components/ListingDetail";
-import { BOARDS, getBoardListingBySlug, getBoardListings, type BoardKind } from "@repo/database";
+import { loadBoardListing } from "@board/lib/cached-board";
+import { BOARDS, type BoardKind } from "@repo/database";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
@@ -37,10 +38,7 @@ export default async function ListingPage({
 	const { board: boardParam } = await searchParams;
 	const board = parseBoard(boardParam);
 
-	const [listing, peers] = await Promise.all([
-		getBoardListingBySlug(slug, board),
-		getBoardListings({ board }),
-	]);
+	const { listing, peers } = await loadBoardListing(slug, board);
 	if (!listing) {
 		notFound();
 	}

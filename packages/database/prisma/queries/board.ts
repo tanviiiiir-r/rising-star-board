@@ -1,5 +1,6 @@
 import { Prisma } from "../generated/client";
 import { db } from "../client";
+import { withPoolRetry } from "../connection-url";
 import {
 	BOARDS,
 	costToClaimFirstCents,
@@ -101,25 +102,29 @@ function withCosts(listings: BoardListing[]): BoardListing[] {
 }
 
 export async function listActiveCategories(): Promise<CategoryRecord[]> {
-	return db.category.findMany({
-		where: { status: "active" },
-		orderBy: { sortOrder: "asc" },
-		select: { id: true, slug: true, name: true },
-	});
+	return withPoolRetry(() =>
+		db.category.findMany({
+			where: { status: "active" },
+			orderBy: { sortOrder: "asc" },
+			select: { id: true, slug: true, name: true },
+		}),
+	);
 }
 
 async function loadLiveBoard(
 	board: Exclude<BoardKind, "daily">,
 	category?: string,
 ): Promise<BoardListing[]> {
-	const rows = await db.listing.findMany({
-		where: {
-			status: "approved",
-			...(category && category !== "all" ? { category: { slug: category } } : {}),
-		},
-		include: listingInclude,
-		take: 400,
-	});
+	const rows = await withPoolRetry(() =>
+		db.listing.findMany({
+			where: {
+				status: "approved",
+				...(category && category !== "all" ? { category: { slug: category } } : {}),
+			},
+			include: listingInclude,
+			take: 400,
+		}),
+	);
 
 	return withCosts(
 		rows
@@ -130,20 +135,22 @@ async function loadLiveBoard(
 }
 
 async function loadDailyArchive(date: string, category?: string): Promise<BoardListing[]> {
-	const rows = await db.dailyRankSnapshot.findMany({
-		where: {
-			utcDate: new Date(`${date}T00:00:00.000Z`),
-			listing: {
-				status: "approved",
-				...(category && category !== "all" ? { category: { slug: category } } : {}),
+	const rows = await withPoolRetry(() =>
+		db.dailyRankSnapshot.findMany({
+			where: {
+				utcDate: new Date(`${date}T00:00:00.000Z`),
+				listing: {
+					status: "approved",
+					...(category && category !== "all" ? { category: { slug: category } } : {}),
+				},
 			},
-		},
-		include: {
-			listing: { include: listingInclude },
-		},
-		orderBy: { rank: "asc" },
-		take: 400,
-	});
+			include: {
+				listing: { include: listingInclude },
+			},
+			orderBy: { rank: "asc" },
+			take: 400,
+		}),
+	);
 
 	return withCosts(
 		rows.map((row) => ({
@@ -172,12 +179,14 @@ async function loadDailyArchive(date: string, category?: string): Promise<BoardL
 }
 
 export async function getDailyArchiveDates(): Promise<string[]> {
-	const rows = await db.dailyRankSnapshot.findMany({
-		distinct: ["utcDate"],
-		orderBy: { utcDate: "desc" },
-		select: { utcDate: true },
-		take: 60,
-	});
+	const rows = await withPoolRetry(() =>
+		db.dailyRankSnapshot.findMany({
+			distinct: ["utcDate"],
+			orderBy: { utcDate: "desc" },
+			select: { utcDate: true },
+			take: 60,
+		}),
+	);
 	return rows.map((row) => row.utcDate.toISOString().slice(0, 10));
 }
 
@@ -201,10 +210,12 @@ export async function getBoardListingBySlug(
 	slug: string,
 	board: BoardKind = "all_time",
 ): Promise<BoardListing | null> {
-	const row = await db.listing.findUnique({
-		where: { slug },
-		include: listingInclude,
-	});
+	const row = await withPoolRetry(() =>
+		db.listing.findUnique({
+			where: { slug },
+			include: listingInclude,
+		}),
+	);
 	if (!row || row.status !== "approved") {
 		return null;
 	}
@@ -220,15 +231,17 @@ export async function getBoardStats(): Promise<BoardStats> {
 	};
 
 	try {
-		const rows = await db.listing.findMany({
-			where: { status: "approved" },
-			select: {
-				allocationCents: true,
-				approvedAt: true,
-				ranking: { select: { rank: true, uniqueViews: true } },
-			},
-			take: 400,
-		});
+		const rows = await withPoolRetry(() =>
+			db.listing.findMany({
+				where: { status: "approved" },
+				select: {
+					allocationCents: true,
+					approvedAt: true,
+					ranking: { select: { rank: true, uniqueViews: true } },
+				},
+				take: 400,
+			}),
+		);
 
 		let listingCount = 0;
 		let allocatedCents = 0;

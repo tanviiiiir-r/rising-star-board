@@ -1,11 +1,11 @@
+import { loadCategoriesOverview } from "@board/lib/cached-board";
 import { formatCount } from "@board/lib/format";
-import { getCategoriesOverview } from "@repo/database";
 import Link from "next/link";
 
 export const revalidate = 15;
 
 export default async function CategoriesPage() {
-	const { hottest, categories } = await getCategoriesOverview().catch(() => ({
+	const { hottest, categories } = await loadCategoriesOverview().catch(() => ({
 		hottest: [],
 		categories: [],
 	}));

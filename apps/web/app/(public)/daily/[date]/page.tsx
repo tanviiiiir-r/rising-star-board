@@ -1,6 +1,7 @@
 import { ListingCard } from "@board/components/ListingCard";
+import { loadDailyBoard } from "@board/lib/cached-board";
 import { formatUtcDateLong } from "@board/lib/format";
-import { getBoardListings, utcDateString } from "@repo/database";
+import { utcDateString } from "@repo/database";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
@@ -35,7 +36,7 @@ export default async function DailyDatePage({
 		redirect("/?board=today");
 	}
 
-	const listings = await getBoardListings({ board: "daily", date }).catch(() => []);
+	const listings = await loadDailyBoard(date).catch(() => []);
 	const label = formatUtcDateLong(date);
 
 	return (

@@ -3,6 +3,7 @@ import "server-only";
 import { PrismaPg } from "@prisma/adapter-pg";
 
 import { PrismaClient } from "./generated/client";
+import { toServerlessPostgresUrl } from "./connection-url";
 
 const prismaClientSingleton = () => {
 	const connectionString = process.env.DATABASE_URL;
@@ -11,9 +12,11 @@ const prismaClientSingleton = () => {
 		throw new Error("DATABASE_URL is not set");
 	}
 
+	const serverlessUrl = toServerlessPostgresUrl(connectionString);
+
 	let host = "";
 	try {
-		host = new URL(connectionString.replace(/^postgres(ql)?:/, "http:")).hostname;
+		host = new URL(serverlessUrl.replace(/^postgres(ql)?:/, "http:")).hostname;
 	} catch {
 		throw new Error("DATABASE_URL is not a valid Postgres URI");
 	}
@@ -23,10 +26,12 @@ const prismaClientSingleton = () => {
 	}
 
 	const adapter = new PrismaPg({
-		connectionString,
+		connectionString: serverlessUrl,
 		max: 1,
-		connectionTimeoutMillis: 5000,
-		idleTimeoutMillis: 10000,
+		min: 0,
+		connectionTimeoutMillis: 8000,
+		idleTimeoutMillis: 1000,
+		allowExitOnIdle: true,
 		ssl:
 			host.includes("supabase.co") || host.includes("pooler.supabase.com")
 				? { rejectUnauthorized: false }
@@ -36,15 +41,9 @@ const prismaClientSingleton = () => {
 	return new PrismaClient({ adapter });
 };
 
-declare global {
-	var prisma: PrismaClient;
-}
+const globalForPrisma = globalThis as typeof globalThis & { prisma?: PrismaClient };
 
-// oxlint-disable-next-line no-redeclare -- This is a singleton
-const prisma = globalThis.prisma || prismaClientSingleton();
-
-if (process.env.NODE_ENV !== "production") {
-	globalThis.prisma = prisma;
-}
+const prisma = globalForPrisma.prisma ?? prismaClientSingleton();
+globalForPrisma.prisma = prisma;
 
 export { prisma as db };
