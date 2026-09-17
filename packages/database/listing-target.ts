@@ -76,6 +76,12 @@ export function listingLogoSrc(url: string, logoUrl?: string | null): string | n
 	return parseListingTarget(url)?.logoUrl ?? null;
 }
 
+export const LISTING_TARGET_ERROR = "Enter a product URL or @handle.";
+
+export function isListingTargetInput(raw: string): boolean {
+	return parseListingTarget(raw) !== null;
+}
+
 /** Parse a product URL, @handle (X), or Instagram handle into a canonical listing target. */
 export function parseListingTarget(raw: string): ParsedListingTarget | null {
 	const trimmed = raw.trim();
