@@ -27,9 +27,9 @@ const prismaClientSingleton = () => {
 
 	const adapter = new PrismaPg({
 		connectionString: serverlessUrl,
-		max: 1,
+		max: 3,
 		min: 0,
-		connectionTimeoutMillis: 8000,
+		connectionTimeoutMillis: 15000,
 		idleTimeoutMillis: 1000,
 		allowExitOnIdle: true,
 		ssl:

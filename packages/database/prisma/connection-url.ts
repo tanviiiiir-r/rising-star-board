@@ -29,7 +29,7 @@ export function toServerlessPostgresUrl(connectionString: string): string {
 
 export function isTransientPoolError(error: unknown): boolean {
 	const message = error instanceof Error ? error.message : String(error);
-	return /EMAXCONNSESSION|max clients reached|too many clients already|remaining connection slots/i.test(
+	return /EMAXCONNSESSION|max clients reached|too many clients already|remaining connection slots|timeout exceeded when trying to connect/i.test(
 		message,
 	);
 }

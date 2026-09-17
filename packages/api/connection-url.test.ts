@@ -47,6 +47,9 @@ describe("isTransientPoolError", () => {
 				new Error("(EMAXCONNSESSION) max clients reached in session mode"),
 			),
 		).toBe(true);
+		expect(isTransientPoolError(new Error("timeout exceeded when trying to connect"))).toBe(
+			true,
+		);
 		expect(isTransientPoolError(new Error("relation listings does not exist"))).toBe(false);
 	});
 });
