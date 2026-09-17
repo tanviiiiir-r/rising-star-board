@@ -38,7 +38,12 @@ export function ListingCard({
 	return (
 		<article className="group relative rounded-2xl px-3 py-4 transition-colors hover:bg-card sm:px-4">
 			<div className="flex items-start gap-3 sm:gap-4">
-				<ListingLogo name={listing.name} url={listing.url} className="mt-0.5 size-11 rounded-full" />
+				<ListingLogo
+					name={listing.name}
+					url={listing.url}
+					logoUrl={listing.logoUrl}
+					className="mt-0.5 size-11 rounded-full"
+				/>
 
 				<div className="min-w-0 flex-1">
 					<div className="flex items-start justify-between gap-4">
@@ -144,7 +149,7 @@ export function ListingCard({
 				<button
 					type="button"
 					onClick={() => onClaimRank?.(claimCents)}
-					className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center opacity-0 transition-opacity group-hover:pointer-events-auto group-hover:opacity-100"
+					className="absolute inset-0 z-10 flex items-center justify-center opacity-0 transition-opacity focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring group-hover:opacity-100 group-focus-within:opacity-100"
 				>
 					<span className="rounded-full bg-primary px-3 py-1 text-xs font-medium text-primary-foreground shadow-sm sm:text-sm">
 						claim this rank for {formatCents(claimCents)}

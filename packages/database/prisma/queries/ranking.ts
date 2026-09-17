@@ -18,9 +18,13 @@ async function withServiceRoleQuery(sql: Prisma.Sql) {
 	});
 }
 
-export async function setAllocation(listingId: string, newCents: number) {
+export async function setAllocation(listingId: string, newCents: number, actorId: string) {
 	return withServiceRoleQuery(Prisma.sql`
-		SELECT public.set_allocation(${listingId}::uuid, ${newCents}::integer) AS result
+		SELECT public.set_allocation(
+			${listingId}::uuid,
+			${newCents}::integer,
+			${actorId}::uuid
+		) AS result
 	`);
 }
 

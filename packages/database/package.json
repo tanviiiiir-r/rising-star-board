@@ -6,7 +6,9 @@
 	"exports": {
 		".": "./index.ts",
 		"./ranking": "./ranking.ts",
-		"./board-types": "./board-types.ts"
+		"./board-types": "./board-types.ts",
+		"./listing-target": "./listing-target.ts",
+		"./listing-image": "./listing-image.ts"
 	},
 	"scripts": {
 		"clean": "git clean -xdf .cache .turbo dist node_modules",

@@ -5,10 +5,37 @@ import { useRouter } from "next/navigation";
 import { Globe } from "lucide-react";
 import { Button, Input, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@repo/ui";
 import { costToClaimFirstCents, previewRankForAmount } from "@repo/database/ranking";
+import { authClient } from "@repo/auth/client";
+import { orpc } from "@shared/lib/orpc-query-utils";
+import { useMutation, useQuery } from "@tanstack/react-query";
 
 import { parseListingTarget } from "../lib/listing-target";
 import { AmountStepper, snapAllocationCents } from "./AmountStepper";
 import { ConfirmRankDialog } from "./ConfirmRankDialog";
+
+const CLAIM_DRAFT_KEY = "bidladder_claim_draft";
+
+interface ClaimDraft {
+	raw: string;
+	categoryId: string;
+	cents: number;
+}
+
+function readDraft(): ClaimDraft | null {
+	try {
+		const raw = window.sessionStorage.getItem(CLAIM_DRAFT_KEY);
+		if (!raw) {
+			return null;
+		}
+		const parsed = JSON.parse(raw) as ClaimDraft;
+		if (!parsed.raw || !parsed.categoryId || !Number.isInteger(parsed.cents)) {
+			return null;
+		}
+		return parsed;
+	} catch {
+		return null;
+	}
+}
 
 export function ClaimRankControl({
 	listings,
@@ -30,6 +57,27 @@ export function ClaimRankControl({
 	const [logoFailed, setLogoFailed] = useState(false);
 	const [confirmOpen, setConfirmOpen] = useState(false);
 	const [agreed, setAgreed] = useState(false);
+	const [claimError, setClaimError] = useState<string | null>(null);
+
+	const mutation = useMutation({
+		...orpc.payments.createClaimCheckout.mutationOptions(),
+		onSuccess: (result) => {
+			window.sessionStorage.removeItem(CLAIM_DRAFT_KEY);
+			window.location.href = result.url;
+		},
+		onError: (cause) => {
+			const code = (cause as { code?: string }).code;
+			if (code === "UNAUTHORIZED") {
+				window.sessionStorage.setItem(
+					CLAIM_DRAFT_KEY,
+					JSON.stringify({ raw, categoryId, cents: previewCents } satisfies ClaimDraft),
+				);
+				router.push("/login?redirectTo=/");
+				return;
+			}
+			setClaimError(cause instanceof Error ? cause.message : "Checkout failed");
+		},
+	});
 
 	useEffect(() => {
 		setDraftCents(defaultCents);
@@ -46,15 +94,33 @@ export function ClaimRankControl({
 		return () => window.clearTimeout(timer);
 	}, [raw]);
 
+	useEffect(() => {
+		const draft = readDraft();
+		if (!draft) {
+			return;
+		}
+		setRaw(draft.raw);
+		setDebounced(draft.raw.trim());
+		setCategoryId(draft.categoryId);
+		setDraftCents(draft.cents);
+	}, []);
+
 	const target = parseListingTarget(debounced);
+	const previewQuery = useQuery({
+		...orpc.board.listingPreview.queryOptions({ input: { raw: debounced } }),
+		enabled: Boolean(target),
+		staleTime: 60_000,
+	});
+	const preview = previewQuery.data ?? null;
 
 	useEffect(() => {
 		setLogoFailed(false);
-	}, [target?.logoUrl]);
+	}, [preview?.logoUrl, target?.logoUrl]);
 
 	const previewCents = snapAllocationCents(draftCents);
 	const previewRank = previewRankForAmount(listings, previewCents) ?? 1;
-	const logoUrl = !logoFailed && target?.logoUrl ? target.logoUrl : null;
+	const resolvedLogo = preview?.logoUrl ?? target?.logoUrl ?? null;
+	const logoUrl = !logoFailed && resolvedLogo ? resolvedLogo : null;
 	const canClaim = Boolean(target && categoryId && !archived);
 	const categoryName = categories.find((category) => category.id === categoryId)?.name ?? "Category";
 
@@ -121,6 +187,7 @@ export function ClaimRankControl({
 					Claim rank
 				</Button>
 			</form>
+			{claimError ? <p className="mt-3 text-sm text-destructive">{claimError}</p> : null}
 
 			<ConfirmRankDialog
 				open={confirmOpen}
@@ -134,18 +201,23 @@ export function ClaimRankControl({
 					if (!target) {
 						return;
 					}
+					setClaimError(null);
 					setConfirmOpen(false);
-					const params = new URLSearchParams({
-						cents: String(previewCents),
-						method: "credits",
-						url: target.canonicalUrl,
-						categoryId,
-						name: target.label,
+					const draft: ClaimDraft = { raw, categoryId, cents: previewCents };
+					void authClient.getSession().then(({ data }) => {
+						if (!data?.user) {
+							window.sessionStorage.setItem(CLAIM_DRAFT_KEY, JSON.stringify(draft));
+							router.push("/login?redirectTo=/");
+							return;
+						}
+						mutation.mutate({
+							cents: previewCents,
+							url: target.canonicalUrl,
+							categoryId,
+							name: preview?.name ?? target.label,
+							origin: window.location.origin,
+						});
 					});
-					if (target.logoUrl) {
-						params.set("logoUrl", target.logoUrl);
-					}
-					router.push(`/credits?${params.toString()}`);
 				}}
 			/>
 		</div>

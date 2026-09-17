@@ -82,8 +82,8 @@
 		--success-foreground: #ffffff;
 		--rise: var(--ink);
 		--fall: var(--fog);
-		--allocation: var(--lime);
-		--allocation-foreground: #08090a;
+		--allocation: var(--ink);
+		--allocation-foreground: var(--void);
 		--border: var(--line);
 		--input: var(--line);
 		--ring: rgb(8 9 10 / 0.22);

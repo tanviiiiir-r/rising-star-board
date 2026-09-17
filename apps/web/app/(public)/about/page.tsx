@@ -1,10 +1,10 @@
+import { loadBoardStats } from "@board/lib/cached-board";
 import { formatCents, formatCount } from "@board/lib/format";
-import { getBoardStats } from "@repo/database";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 15;
 
 export default async function AboutPage() {
-	const stats = await getBoardStats().catch(() => ({
+	const stats = await loadBoardStats().catch(() => ({
 		listingCount: 0,
 		allocatedCents: 0,
 		clicks: 0,

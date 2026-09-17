@@ -14,7 +14,8 @@ export default async function CreditsPage({
 		<main className="mx-auto w-full max-w-md px-4 pb-16 pt-8">
 			<h1 className="font-display text-[2rem] leading-tight">Buy credits</h1>
 			<p className="mt-2 text-sm text-muted-foreground">
-				Sign in, pay, then allocate on an approved listing. Points stay on a signed-in account.
+				Add credits to your wallet, then allocate them on a listing you own. Homepage claims open
+				Stripe directly and do not use this page.
 			</p>
 			{params.canceled === "1" ? (
 				<p className="mt-3 text-sm text-fall">Checkout canceled. Nothing was charged.</p>

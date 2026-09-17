@@ -1,9 +1,9 @@
 import { createCreditCheckoutSession } from "@repo/payments";
 import { z } from "zod";
 
-import { publicProcedure } from "../../../orpc/procedures";
+import { protectedProcedure } from "../../../orpc/procedures";
 
-export const createCreditCheckout = publicProcedure
+export const createCreditCheckout = protectedProcedure
 	.route({
 		method: "POST",
 		path: "/payments/credits",
@@ -19,21 +19,13 @@ export const createCreditCheckout = publicProcedure
 			origin: z.string().url(),
 		}),
 	)
-	.handler(async ({ input, context }) => {
-		const session = await import("@repo/auth").then((mod) =>
-			mod.auth.api.getSession({ headers: context.headers }),
-		);
-
-		if (!session?.user) {
-			throw new Error("Sign in to buy credits or claim a rank.");
-		}
-
-		return createCreditCheckoutSession({
-			userId: session?.user.id,
+	.handler(async ({ input, context }) =>
+		createCreditCheckoutSession({
+			userId: context.user.id,
 			cents: input.cents,
 			origin: input.origin,
 			method: input.method,
 			kind: input.kind,
 			listingId: input.listingId,
-		});
-	});
+		}),
+	);

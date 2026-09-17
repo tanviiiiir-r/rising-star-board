@@ -1,9 +1,9 @@
 import { DailyDayCard } from "@board/components/DailyDayCard";
+import { loadDailyOverview } from "@board/lib/cached-board";
 import { formatUtcDateLong } from "@board/lib/format";
-import { getDailyOverview } from "@repo/database";
 import type { Metadata } from "next";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 15;
 
 export const metadata: Metadata = {
 	title: { absolute: "Daily — Bid Ladder" },
@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 };
 
 export default async function DailyPage() {
-	const data = await getDailyOverview().catch(() => ({
+	const data = await loadDailyOverview().catch(() => ({
 		launchedOn: "",
 		boards: [],
 	}));

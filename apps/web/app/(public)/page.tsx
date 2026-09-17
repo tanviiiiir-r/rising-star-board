@@ -1,14 +1,10 @@
 import { PublicBoard } from "@board/components/PublicBoard";
-import {
-	getBoardListings,
-	listActiveCategories,
-	utcDateString,
-	type HomeBoard,
-} from "@repo/database";
+import { loadHomeBoard } from "@board/lib/cached-board";
+import { utcDateString, type HomeBoard } from "@repo/database";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 15;
 
 export const metadata: Metadata = {
 	title: { absolute: "Bid Ladder" },
@@ -43,25 +39,20 @@ export default async function HomePage({
 	const board = asHomeBoard(params.board);
 	const category = params.category ?? "all";
 	const page = parsePage(params.page);
-	const categoryFilter = category === "all" ? undefined : category;
 
-	let listings: Awaited<ReturnType<typeof getBoardListings>> = [];
-	let todayListings: Awaited<ReturnType<typeof getBoardListings>> = [];
-	let categories: Awaited<ReturnType<typeof listActiveCategories>> = [];
+	let listings: Awaited<ReturnType<typeof loadHomeBoard>>["listings"] = [];
+	let todayListings: Awaited<ReturnType<typeof loadHomeBoard>>["todayListings"] = [];
+	let categories: Awaited<ReturnType<typeof loadHomeBoard>>["categories"] = [];
 	let loadError: string | null = null;
 
 	try {
-		const [boardRows, todayRows, catalog] = await Promise.all([
-			getBoardListings({ board, category: categoryFilter }),
-			getBoardListings({ board: "today", category: categoryFilter }),
-			listActiveCategories(),
-		]);
-		listings = boardRows;
-		todayListings = todayRows;
-		categories = catalog;
+		const snapshot = await loadHomeBoard(board, category);
+		listings = snapshot.listings;
+		todayListings = snapshot.todayListings;
+		categories = snapshot.categories;
 	} catch (error) {
 		console.error("board load failed", error);
-		loadError = error instanceof Error ? error.message : "Board failed to load";
+		loadError = "The board couldn't load.";
 	}
 
 	return (

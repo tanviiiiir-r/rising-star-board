@@ -3,26 +3,18 @@
 import { orpc } from "@shared/lib/orpc-query-utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button, Input } from "@repo/ui";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
+
+import { isListingTargetInput, LISTING_TARGET_ERROR, parseListingTarget } from "../lib/listing-target";
 
 const formSchema = z.object({
 	name: z.string().trim().min(2).max(60),
 	tagline: z.string().trim().min(10).max(120),
-	url: z
-		.string()
-		.trim()
-		.max(300)
-		.refine((value) => {
-			try {
-				const parsed = new URL(value);
-				return parsed.protocol === "https:" && parsed.hostname.includes(".");
-			} catch {
-				return false;
-			}
-		}, "Enter a full https:// URL"),
+	url: z.string().trim().min(1).max(300).refine(isListingTargetInput, LISTING_TARGET_ERROR),
 	description: z.string().trim().min(20).max(1200),
 	categoryId: z.string().uuid(),
 });
@@ -50,16 +42,62 @@ export function SubmitListingForm({ categories }: { categories: CategoryOption[]
 			router.push("/dashboard");
 		},
 	});
+	const url = form.watch("url");
+	const [debounced, setDebounced] = useState("");
+	const [logoFailed, setLogoFailed] = useState(false);
+	useEffect(() => {
+		const timer = window.setTimeout(() => setDebounced((url ?? "").trim()), 300);
+		return () => window.clearTimeout(timer);
+	}, [url]);
+	const target = parseListingTarget(debounced);
+	const previewQuery = useQuery({
+		...orpc.board.listingPreview.queryOptions({ input: { raw: debounced } }),
+		enabled: Boolean(target),
+		staleTime: 60_000,
+	});
+	const preview = previewQuery.data ?? null;
+
+	useEffect(() => {
+		if (!preview) {
+			return;
+		}
+		if (!form.getValues("name") && preview.name) {
+			form.setValue("name", preview.name, { shouldValidate: true });
+		}
+		if (!form.getValues("description") && preview.description.length >= 20) {
+			form.setValue("description", preview.description, { shouldValidate: true });
+		}
+	}, [form, preview]);
 
 	const onSubmit = form.handleSubmit((values) => {
 		mutation.mutate(values);
 	});
+	const resolvedLogo = preview?.logoUrl ?? target?.logoUrl ?? null;
+	const logoUrl = !logoFailed && resolvedLogo ? resolvedLogo : null;
+
+	useEffect(() => {
+		setLogoFailed(false);
+	}, [resolvedLogo]);
 
 	return (
 		<form className="space-y-4" onSubmit={onSubmit}>
 			<Input placeholder="Name" {...form.register("name")} />
 			<Input placeholder="Tagline" {...form.register("tagline")} />
-			<Input placeholder="https://example.com" {...form.register("url")} />
+			<label className="relative block">
+				{logoUrl ? (
+					<img
+						src={logoUrl}
+						alt=""
+						className="pointer-events-none absolute top-1/2 left-2.5 size-6 -translate-y-1/2 rounded-full bg-muted object-cover"
+						onError={() => setLogoFailed(true)}
+					/>
+				) : null}
+				<Input
+					placeholder="https://example.com or @handle"
+					className={logoUrl ? "pl-10" : undefined}
+					{...form.register("url")}
+				/>
+			</label>
 			<textarea
 				className="min-h-32 w-full rounded-xl border bg-background px-3 py-2 text-sm"
 				placeholder="What is it?"

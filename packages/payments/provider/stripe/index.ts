@@ -1,16 +1,13 @@
 import {
-	applyCreditTopup,
-	assertAllocationAmount,
 	createPurchase,
 	deletePurchaseBySubscriptionId,
-	getListingOwnerAndAllocation,
 	getPurchaseBySubscriptionId,
-	setAllocation,
 	updatePurchase,
 } from "@repo/database";
 import { logger } from "@repo/logs";
 import Stripe from "stripe";
 
+import { applyPaidCreditSession } from "../../lib/apply-paid-credit-session";
 import { setCustomerIdToEntity } from "../../lib/customer";
 import { getPlanIdByProviderPriceId } from "../../lib/provider-price-ids";
 import type {
@@ -165,28 +162,13 @@ export const webhookHandler: WebhookHandler = async (req) => {
 					(metadata?.kind === "credit_topup" || metadata?.kind === "rank_claim") &&
 					payment_status === "paid"
 				) {
-					const userId = metadata.user_id;
-					const listingId = metadata.listing_id;
-					const cents = amount_total ?? 0;
-					if (userId && Number.isInteger(cents) && cents > 0) {
-						await applyCreditTopup({
-							userId,
-							cents,
-							idempotencyKey: id,
-						});
-						if (metadata.kind === "rank_claim" && listingId) {
-							const listing = await getListingOwnerAndAllocation(listingId);
-							if (listing?.ownerId === userId) {
-								const nextCents = listing.allocationCents + cents;
-								const amount = assertAllocationAmount(nextCents);
-								if (amount.ok) {
-									await setAllocation(listing.id, nextCents);
-								}
-							}
-						}
-					} else {
-						logger.error("Credit checkout paid without a signed-in user_id; ledger not credited");
-					}
+					await applyPaidCreditSession({
+						sessionId: id,
+						userId: metadata.user_id,
+						listingId: metadata.listing_id,
+						kind: metadata.kind,
+						cents: amount_total ?? 0,
+					});
 					return new Response(null, { status: 204 });
 				}
 
@@ -275,7 +257,7 @@ export const webhookHandler: WebhookHandler = async (req) => {
 		return new Response(null, { status: 204 });
 	} catch (error) {
 		return new Response(`Webhook error: ${error instanceof Error ? error.message : ""}`, {
-			status: 400,
+			status: 500,
 		});
 	}
 };
