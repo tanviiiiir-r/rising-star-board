@@ -13,6 +13,10 @@ vi.mock("@repo/database", () => ({
 	createListing: vi.fn(),
 }));
 
+vi.mock("@repo/database/listing-image", () => ({
+	resolveListingPreview: vi.fn(),
+}));
+
 vi.mock("@repo/database/listing-target", async () => {
 	const actual = await vi.importActual<typeof import("@repo/database/listing-target")>(
 		"@repo/database/listing-target",
@@ -26,6 +30,7 @@ vi.mock("@repo/payments", () => ({
 
 import { auth } from "@repo/auth";
 import { createListing } from "@repo/database";
+import { resolveListingPreview } from "@repo/database/listing-image";
 import { createCreditCheckoutSession } from "@repo/payments";
 
 import { createClaimCheckout } from "./create-claim-checkout";
@@ -37,6 +42,16 @@ describe("createClaimCheckout", () => {
 	beforeEach(() => {
 		vi.mocked(createListing).mockReset();
 		vi.mocked(createCreditCheckoutSession).mockReset();
+		vi.mocked(resolveListingPreview).mockReset();
+		vi.mocked(resolveListingPreview).mockResolvedValue({
+			kind: "web",
+			canonicalUrl: "https://example.com",
+			label: "example.com",
+			name: "Example",
+			description: "Example site",
+			logoUrl: "https://example.com/apple-touch-icon.png",
+			hostname: "example.com",
+		});
 	});
 
 	it("rejects an unauthenticated caller", async () => {

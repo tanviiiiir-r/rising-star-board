@@ -44,6 +44,7 @@ export function LatestActivity({ listings }: { listings: BoardListing[] }) {
 									<ListingLogo
 										name={listing.name}
 										url={listing.url}
+										logoUrl={listing.logoUrl}
 										size="sm"
 										className="size-7 rounded-full"
 									/>

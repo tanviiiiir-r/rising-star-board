@@ -1,6 +1,7 @@
 import { Prisma } from "../generated/client";
 import { db } from "../client";
 import { withPoolRetry } from "../connection-url";
+import { listingLogoSrc } from "../../listing-target";
 import {
 	BOARDS,
 	costToClaimFirstCents,
@@ -67,6 +68,7 @@ function toListing(row: ListingWithRanks, board: BoardKind): BoardListing {
 		name: row.name,
 		tagline: row.tagline,
 		url: row.url,
+		logoUrl: listingLogoSrc(row.url),
 		description: row.description,
 		approvedAt: row.approvedAt?.toISOString() ?? null,
 		allocationSetAt: row.allocationSetAt?.toISOString() ?? null,
@@ -159,6 +161,7 @@ async function loadDailyArchive(date: string, category?: string): Promise<BoardL
 			name: row.listing.name,
 			tagline: row.listing.tagline,
 			url: row.listing.url,
+			logoUrl: listingLogoSrc(row.listing.url),
 			description: row.listing.description,
 			approvedAt: row.listing.approvedAt?.toISOString() ?? null,
 			allocationSetAt: row.listing.allocationSetAt?.toISOString() ?? null,

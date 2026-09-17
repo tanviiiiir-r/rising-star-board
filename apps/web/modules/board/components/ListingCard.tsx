@@ -38,7 +38,12 @@ export function ListingCard({
 	return (
 		<article className="group relative rounded-2xl px-3 py-4 transition-colors hover:bg-card sm:px-4">
 			<div className="flex items-start gap-3 sm:gap-4">
-				<ListingLogo name={listing.name} url={listing.url} className="mt-0.5 size-11 rounded-full" />
+				<ListingLogo
+					name={listing.name}
+					url={listing.url}
+					logoUrl={listing.logoUrl}
+					className="mt-0.5 size-11 rounded-full"
+				/>
 
 				<div className="min-w-0 flex-1">
 					<div className="flex items-start justify-between gap-4">

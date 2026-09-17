@@ -73,15 +73,7 @@ export function listingLogoSrc(url: string, logoUrl?: string | null): string | n
 	if (stored) {
 		return stored;
 	}
-	try {
-		const host = new URL(url).hostname.replace(/^www\./, "");
-		if (!host) {
-			return null;
-		}
-		return faviconForHost(host);
-	} catch {
-		return null;
-	}
+	return parseListingTarget(url)?.logoUrl ?? null;
 }
 
 /** Parse a product URL, @handle (X), or Instagram handle into a canonical listing target. */

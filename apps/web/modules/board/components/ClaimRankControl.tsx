@@ -7,7 +7,7 @@ import { Button, Input, Select, SelectContent, SelectItem, SelectTrigger, Select
 import { costToClaimFirstCents, previewRankForAmount } from "@repo/database/ranking";
 import { authClient } from "@repo/auth/client";
 import { orpc } from "@shared/lib/orpc-query-utils";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 
 import { parseListingTarget } from "../lib/listing-target";
 import { AmountStepper, snapAllocationCents } from "./AmountStepper";
@@ -106,14 +106,21 @@ export function ClaimRankControl({
 	}, []);
 
 	const target = parseListingTarget(debounced);
+	const previewQuery = useQuery({
+		...orpc.board.listingPreview.queryOptions({ input: { raw: debounced } }),
+		enabled: Boolean(target),
+		staleTime: 60_000,
+	});
+	const preview = previewQuery.data ?? null;
 
 	useEffect(() => {
 		setLogoFailed(false);
-	}, [target?.logoUrl]);
+	}, [preview?.logoUrl, target?.logoUrl]);
 
 	const previewCents = snapAllocationCents(draftCents);
 	const previewRank = previewRankForAmount(listings, previewCents) ?? 1;
-	const logoUrl = !logoFailed && target?.logoUrl ? target.logoUrl : null;
+	const resolvedLogo = preview?.logoUrl ?? target?.logoUrl ?? null;
+	const logoUrl = !logoFailed && resolvedLogo ? resolvedLogo : null;
 	const canClaim = Boolean(target && categoryId && !archived);
 	const categoryName = categories.find((category) => category.id === categoryId)?.name ?? "Category";
 
@@ -207,7 +214,7 @@ export function ClaimRankControl({
 							cents: previewCents,
 							url: target.canonicalUrl,
 							categoryId,
-							name: target.label,
+							name: preview?.name ?? target.label,
 							origin: window.location.origin,
 						});
 					});

@@ -1,4 +1,5 @@
 import { createListing } from "@repo/database";
+import { resolveListingPreview } from "@repo/database/listing-image";
 import { parseListingTarget } from "@repo/database/listing-target";
 import { createCreditCheckoutSession } from "@repo/payments";
 import { ORPCError } from "@orpc/client";
@@ -28,14 +29,15 @@ export const createClaimCheckout = protectedProcedure
 			throw new ORPCError("BAD_REQUEST", { message: "Enter a product URL or @handle." });
 		}
 
-		const name = (input.name?.trim() || target.label).slice(0, 60);
+		const preview = await resolveListingPreview(input.url);
+		const name = (input.name?.trim() || preview?.name || target.label).slice(0, 60);
 		const listing = await createListing({
 			ownerId: context.user.id,
 			categoryId: input.categoryId,
 			name,
 			tagline: `Claimed rank for ${target.label}`,
 			url: target.canonicalUrl,
-			description: `Paid rank claim for ${target.canonicalUrl}.`,
+			description: preview?.description || `Paid rank claim for ${target.canonicalUrl}.`,
 		});
 
 		return createCreditCheckoutSession({

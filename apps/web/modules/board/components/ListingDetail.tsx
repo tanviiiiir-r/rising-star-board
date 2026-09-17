@@ -81,7 +81,12 @@ export function ListingDetail({
 				<div className="flex items-start justify-between gap-4">
 					<div className="min-w-0">
 						<div className="flex items-center gap-3">
-							<ListingLogo name={listing.name} url={listing.url} className="size-11 rounded-full" />
+							<ListingLogo
+								name={listing.name}
+								url={listing.url}
+								logoUrl={listing.logoUrl}
+								className="size-11 rounded-full"
+							/>
 							<span className="rounded-md border-[0.5px] border-border px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
 								{listing.categoryName}
 							</span>

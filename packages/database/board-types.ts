@@ -8,6 +8,7 @@ export interface BoardListing {
 	name: string;
 	tagline: string;
 	url: string;
+	logoUrl: string | null;
 	description: string;
 	approvedAt: string | null;
 	allocationSetAt: string | null;

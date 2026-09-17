@@ -1,4 +1,5 @@
 import { createListing } from "@repo/database";
+import { resolveListingPreview } from "@repo/database/listing-image";
 import { z } from "zod";
 
 import { protectedProcedure } from "../../../orpc/procedures";
@@ -30,13 +31,14 @@ export const submitListing = protectedProcedure
 			categoryId: z.string().uuid(),
 		}),
 	)
-	.handler(async ({ input, context }) =>
-		createListing({
+	.handler(async ({ input, context }) => {
+		const preview = await resolveListingPreview(input.url);
+		return createListing({
 			ownerId: context.user.id,
 			categoryId: input.categoryId,
 			name: input.name,
 			tagline: input.tagline,
-			url: input.url,
+			url: preview?.canonicalUrl ?? input.url,
 			description: input.description,
-		}),
-	);
+		});
+	});

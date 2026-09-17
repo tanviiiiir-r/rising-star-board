@@ -44,6 +44,7 @@ export function DailyListingRow({
 			<ListingLogo
 				name={listing.name}
 				url={listing.url}
+				logoUrl={listing.logoUrl}
 				className="mt-0.5 size-8 rounded-full"
 			/>
 			<div className="flex w-8 shrink-0 flex-col items-center pt-0.5">

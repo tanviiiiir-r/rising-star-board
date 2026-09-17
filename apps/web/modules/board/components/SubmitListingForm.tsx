@@ -3,10 +3,13 @@
 import { orpc } from "@shared/lib/orpc-query-utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button, Input } from "@repo/ui";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
+
+import { parseListingTarget } from "../lib/listing-target";
 
 const formSchema = z.object({
 	name: z.string().trim().min(2).max(60),
@@ -50,16 +53,50 @@ export function SubmitListingForm({ categories }: { categories: CategoryOption[]
 			router.push("/dashboard");
 		},
 	});
+	const url = form.watch("url");
+	const target = parseListingTarget(url ?? "");
+	const previewQuery = useQuery({
+		...orpc.board.listingPreview.queryOptions({ input: { raw: url ?? "" } }),
+		enabled: Boolean(target),
+		staleTime: 60_000,
+	});
+	const preview = previewQuery.data ?? null;
+
+	useEffect(() => {
+		if (!preview) {
+			return;
+		}
+		if (!form.getValues("name") && preview.name) {
+			form.setValue("name", preview.name, { shouldValidate: true });
+		}
+		if (!form.getValues("description") && preview.description.length >= 20) {
+			form.setValue("description", preview.description, { shouldValidate: true });
+		}
+	}, [form, preview]);
 
 	const onSubmit = form.handleSubmit((values) => {
 		mutation.mutate(values);
 	});
+	const logoUrl = preview?.logoUrl ?? target?.logoUrl ?? null;
 
 	return (
 		<form className="space-y-4" onSubmit={onSubmit}>
 			<Input placeholder="Name" {...form.register("name")} />
 			<Input placeholder="Tagline" {...form.register("tagline")} />
-			<Input placeholder="https://example.com" {...form.register("url")} />
+			<label className="relative block">
+				{logoUrl ? (
+					<img
+						src={logoUrl}
+						alt=""
+						className="pointer-events-none absolute top-1/2 left-2.5 size-6 -translate-y-1/2 rounded-full bg-muted object-cover"
+					/>
+				) : null}
+				<Input
+					placeholder="https://example.com or @handle"
+					className={logoUrl ? "pl-10" : undefined}
+					{...form.register("url")}
+				/>
+			</label>
 			<textarea
 				className="min-h-32 w-full rounded-xl border bg-background px-3 py-2 text-sm"
 				placeholder="What is it?"
